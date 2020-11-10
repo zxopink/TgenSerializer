@@ -88,7 +88,8 @@ namespace TgenSerializer
             //Console.WriteLine(Deconstructor.Deconstruct(test));
             string myObj = Deconstructor.Deconstruct(test);
             Console.WriteLine(myObj);
-            object constructed = Deconstructor.Construct(myObj);
+            TestClass constructed = (TestClass)Deconstructor.Construct(myObj);
+            Console.WriteLine(constructed.str);
             //Console.WriteLine(constructed.cType.a + " AND " + constructed.b);
         }
         /*

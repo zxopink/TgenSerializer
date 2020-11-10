@@ -72,7 +72,7 @@ namespace TgenSerializer
                     {
                         objGraph.Append(Deconstruction(member) + betweenEnum);
                     }
-                    objGraph.Remove(objGraph.Length - 1, 1); //remove the last "," (TEST IT)
+                    //objGraph.Remove(objGraph.Length - 1, 1); //remove the last "," (TEST IT)
                     objGraph.Append(endEnum + endClass);
                     continue; //if you don't use continue the enumer will procceed and print it's settings (lenght, item, size, version...)
                 }
@@ -144,17 +144,22 @@ namespace TgenSerializer
                 obj = GetValue(obj.GetType(), ref objData);
                 return;
             }
-            if (obj.GetType().IsArray)
+
+            if (obj is IEnumerable)
             {
                 obj = GetValue(obj.GetType(), ref objData);
+                objData = objData.Remove(0, 1); //remove the end "]" (end of list class)
                 return;
             }
             while (objData[0] == startClass[0])
             {
                 MemberInfo fieldInfo = GetField(obj, ref objData); //detect the field inside obj
-                Console.WriteLine(fieldInfo + " YOO");
-                Console.WriteLine(GetMemberType(fieldInfo));
-                object instance = FormatterServices.GetUninitializedObject(GetMemberType(fieldInfo)); //if the field isn't primitive, make a new instance of it
+
+                //if the field isn't primitive, make a new instance of it
+                //NOTE: strings must be initialized
+                Type typeOfInstance = GetMemberType(fieldInfo);
+                //I have no clue to to initialize a string object, this is my way to do it
+                object instance = typeOfInstance != typeof(string) ? FormatterServices.GetUninitializedObject(typeOfInstance) : string.Empty;
                 Construction(ref instance, ref objData); //proceed to construct the new field instance
                 SetValue(fieldInfo, obj, instance); //set the new field instance to the obj
             }
@@ -179,15 +184,19 @@ namespace TgenSerializer
             string valueStr = "";
             foreach (var letter in dataInfo)
             {
-                if (letter == startEnum[0])
+                if (dataInfo[0] == startEnum[0])
                 {
                     dataInfo = dataInfo.Remove(0, 1); //remove the start "<"
-                    object instance = FormatterServices.GetUninitializedObject(objType);
-                    foreach (var item in (IEnumerable)instance)
+
+                    IList instance = (IList)Activator.CreateInstance(objType);
+                    while (dataInfo[0] != endEnum[0])
                     {
-                        var field = item;
-                        Construction(ref field, ref dataInfo);
-                        dataInfo = dataInfo.Remove(0, 1); //remove the "," between items
+                        //objType is a list of the real type
+                        //makes a new object by the type of the given list
+                        object item = FormatterServices.GetUninitializedObject(objType.GetGenericArguments()[0]);
+                        Construction(ref item, ref dataInfo);
+                        instance.Add(item);
+                        //dataInfo = dataInfo.Remove(0, 1); //remove the "," between items
                     }
                     dataInfo = dataInfo.Remove(0, 1); //remove the start ">"
                     return instance;
