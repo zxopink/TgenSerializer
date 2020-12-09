@@ -14,17 +14,15 @@ namespace TgenSerializer
         //These fields are shared both by the constructor and constructor
         //NOTE: BetweenEnum and EndClass must have the same lenght since the serlizer treats them as the end of a class
         #region Global Fields
-        private const string startClass = "[";
-        private const string equals = "=";
-        private const string endClass = "]";
-        private const string startEnum = "<"; //start of array (enumer is sort of a collection like array and list, I like to call it array at time)
-        private const string betweenEnum = ","; //spaces between items/members in the array
-        private const string endEnum = ">"; //end of array
-        private const string nullObj = "";
+        private const string startClass = GlobalOperations.startClass; //sign for the start of a class
+        private const string equals = GlobalOperations.equals; //sign for equals 
+        private const string endClass = GlobalOperations.endClass; //sign for the end of a class
+        private const string startEnum = GlobalOperations.startEnum; //start of array (enumer is sort of a collection like array and list, I like to call it array at time)
+        private const string betweenEnum = GlobalOperations.betweenEnum; //spaces between items/members in the array
+        private const string endEnum = GlobalOperations.endEnum; //end of array
+        private const string nullObj = GlobalOperations.nullObj; //sign for a nullObj (deprecated)
 
-        private static BindingFlags bindingFlags = BindingFlags.Instance |
-       BindingFlags.NonPublic |
-       BindingFlags.Public; //specifies to get both public and non public fields and properties
+        private static BindingFlags bindingFlags = GlobalOperations.bindingFlags; //specifies to get both public and non public fields and properties
         #endregion
 
         public static object Construct(string objData)
