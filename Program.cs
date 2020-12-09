@@ -19,6 +19,8 @@ namespace TgenSerializer
         int num1;
         int num2;
         List<Btype> list1;
+        Object failure;
+        List<List<List<Btype>>> listFromTheUnspeakableHell;
         TestClass thisone;
         public string str;
         Btype btyper;
@@ -31,6 +33,8 @@ namespace TgenSerializer
             list1.Add(new Btype(7));
             list1.Add(new Btype(9));
             num3++;
+            failure = new object();
+            //listFromTheUnspeakableHell = new List<List<List<Btype>>>();
         }
     }
     [Serializable]
@@ -90,6 +94,7 @@ namespace TgenSerializer
             Console.WriteLine(myObj);
             TestClass constructed = (TestClass)Deconstructor.Construct(myObj);
             Console.WriteLine(constructed.str);
+            Console.WriteLine(Deconstructor.Deconstruct(test));
             //Console.WriteLine(constructed.cType.a + " AND " + constructed.b);
         }
         /*

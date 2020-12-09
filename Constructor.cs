@@ -3,14 +3,13 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using System.Runtime.CompilerServices;
 using System.Runtime.Serialization;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace TgenSerializer
 {
-    static class Deconstructor
+    public static class Constructor
     {
         //These fields are shared both by the constructor and constructor
         //NOTE: BetweenEnum and EndClass must have the same lenght since the serlizer treats them as the end of a class
@@ -28,99 +27,16 @@ namespace TgenSerializer
        BindingFlags.Public; //specifies to get both public and non public fields and properties
         #endregion
 
-        public static string Deconstruct(object obj)
-        {
-            StringBuilder objGraph = new StringBuilder();
-            return (startClass + obj.GetType() + equals + Deconstruction(obj) + endClass);
-            //must delcare the type at first so the constructor later on knows with what type it deals
-            //the properties and fields can be aligned later on by using the first type, like a puzzle
-            //the name of the object doesn't matter (therefore doesn't need to be saved) as well since the it will be changed anyways
-        }
-
-        private static string Deconstruction(object obj)
-        {
-            if (!obj.GetType().IsSerializable)
-                return string.Empty; //don't touch the field
-
-            if (obj.GetType().IsPrimitive || obj is string)
-                return obj.ToString();
-
-            var fields = obj.GetType().GetFields(bindingFlags);
-            StringBuilder objGraph = new StringBuilder();
-
-            #region SpecialCases
-            /*Special cases so far:
-             * 1. Object is null (Done)
-             * 2. Object points to itself in an infnite loop (Done)
-             * 3. backingField (Done)
-             * 4. Object is an enum/list/array (Done)
-            */
-            #endregion
-            foreach (var field in fields)
-            {
-                //the field is a field class, the fieldValue is the value of this field (the actual object)
-                //for examle field is "int num = 5" and the field value is the 5
-                object fieldValue = field.GetValue(obj);
-                
-                if (fieldValue == null)
-                {
-                    //This line can be removed to not include null refrences
-                    //The constructor knows how to deal with it
-                    //objGraph.Append(string.Empty);
-                    //objGraph.Append(startClass + field.Name + equals + nullObj + endClass);
-                    continue;
-                }
-                if (fieldValue == obj)
-                    throw new StackOverflowException("An object points to itself");
-                if (fieldValue.GetType().GetInterfaces().Contains(typeof(IEnumerable)) && !(fieldValue is string)) //string is a special type of enum (list of chars)
-                {
-                    objGraph.Append(startClass + field.Name + equals + startEnum);
-                    foreach (var member in fieldValue as IEnumerable)
-                    {
-                        objGraph.Append(Deconstruction(member) + betweenEnum); //between Enum is like endclass
-                    }
-                    //objGraph.Remove(objGraph.Length - 1, 1); //remove the last "," (TEST IT)
-                    objGraph.Append(endEnum + endClass);
-                    continue; //if you don't use continue the enumer will procceed and print it's settings (lenght, item, size, version...)
-                }
-
-                //BACKING FIELDS ARE IGNORED BECAUSE THE PROPERTIES LINE SAVES THEM INSTEAD
-                //one of the few compiler generated attributes is backing fields
-                //backing field is a proprty with a get and set only, which has a hidden field behind it
-                //instead we save this field in the properties
-                if (Attribute.GetCustomAttribute(field, typeof(CompilerGeneratedAttribute)) == null) //this line checks for backing field
-                    objGraph.Append(startClass + field.Name + equals + Deconstruction(fieldValue) + endClass);
-                else
-                    objGraph.Append(startClass + GetNameOfBackingField(field.Name) + equals + Deconstruction(fieldValue) + endClass);
-            }
-            return objGraph.ToString();
-        }
-
-        private static string GetNameOfBackingField(string backingField)
-        {
-            //backing field follows by the pattern: "<'name'>k__BackingField"
-            StringBuilder name = new StringBuilder();
-            name.Append(backingField);
-            name.Remove(0, 1); //cuts the field's '<' at the start (NOT AN ENUM!)
-            name.Remove(backingField.Length - 17, 16); //cuts the '>k__BackingField' at the end
-            return name.ToString();
-        }
-
-        private static string MemberDeconstructor(MemberInfo member)
-        {
-            return "[" + member.Name + "=" + "]"; //Deconstruction(member.GetValue(obj)) + "]";
-        }
-
         public static object Construct(string objData)
         {
             objData = objData.Remove(0, startClass.Length); //remove the '[' at the start
             string strType = "";
             foreach (var letter in objData)
             {
-                if (CheckHitOperator(objData,equals)) //when the program gets to "=" it continues
+                if (CheckHitOperator(objData, equals)) //when the program gets to "=" it continues
                     break;
                 strType += letter;
-                objData = objData.Remove(0,1); //remove the letters since they won't be used later
+                objData = objData.Remove(0, 1); //remove the letters since they won't be used later
             }
             objData = objData.Remove(0, equals.Length); //remove the '=' at the end
             //Console.WriteLine(strType);
@@ -129,11 +45,6 @@ namespace TgenSerializer
             var instance = FormatterServices.GetUninitializedObject(typeOfObj); //creates an instance of object without calling it's constructor (default deserialization)
             Construction(ref instance, ref objData);
             return instance;
-
-            var bindingFlags = BindingFlags.Instance |
-       BindingFlags.NonPublic |
-       BindingFlags.Public; //specifies to get both public and non public fields and properties
-            var fields = objData.GetType().GetFields(bindingFlags);
         }
 
         /// <summary>
@@ -173,8 +84,6 @@ namespace TgenSerializer
                 objData = objData.Remove(0, endClass.Length); //remove the ']' at the end of the class
             return;
 
-            //throw new NotImplementedException(); //SHOULD NEVER REACH HERE
-
             #region SpecialCases
             /*Special cases so far:
              * 1. Object is null (Done)
@@ -187,7 +96,6 @@ namespace TgenSerializer
 
         private static object GetValue(Type objType, ref string dataInfo)
         {
-            //dataInfo = dataInfo.Remove(0, 1); //remove the '=' at the start
             string valueStr = "";
             foreach (var letter in dataInfo)
             {
@@ -195,7 +103,7 @@ namespace TgenSerializer
                 {
                     dataInfo = dataInfo.Remove(0, startEnum.Length); //remove the start "<"
                     IList instance = (IList)Activator.CreateInstance(objType);
-                    while (!CheckHitOperator(dataInfo,endEnum))
+                    while (!CheckHitOperator(dataInfo, endEnum))
                     {
                         //objType is a list of the real type
                         //makes a new object by the type of the given list
@@ -208,9 +116,8 @@ namespace TgenSerializer
                     dataInfo = dataInfo.Remove(0, endClass.Length); //remove the end class "]"
                     return instance;
                 }
-                    //throw new NotImplementedException(); //HANDLE ENUMS
 
-                if (CheckHitOperator(dataInfo,endClass)) //when the program gets to "]" it continues
+                if (CheckHitOperator(dataInfo, endClass)) //when the program gets to "]" it continues
                     break;
                 valueStr += letter;
                 dataInfo = dataInfo.Remove(0, 1); //remove the letters since they won't be used later
@@ -251,7 +158,7 @@ namespace TgenSerializer
             if (objType is FieldInfo)
                 return ((FieldInfo)objType).FieldType;
             else
-                return  ((PropertyInfo)objType).PropertyType;
+                return ((PropertyInfo)objType).PropertyType;
         }
 
         /// <summary>
@@ -267,7 +174,7 @@ namespace TgenSerializer
             string fieldName = "";
             foreach (var letter in dataInfo)
             {
-                if (CheckHitOperator(dataInfo,equals)) //when the program gets to "=" it continues
+                if (CheckHitOperator(dataInfo, equals)) //when the program gets to "=" it continues
                     break;
                 fieldName += letter;
                 dataInfo = dataInfo.Remove(0, 1); //remove the letters since they won't be used later
