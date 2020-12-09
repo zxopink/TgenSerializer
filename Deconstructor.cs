@@ -37,8 +37,8 @@ namespace TgenSerializer
 
         private static string Deconstruction(object obj)
         {
-            if (!obj.GetType().IsSerializable)
-                return string.Empty; //don't touch the field
+            if (!obj.GetType().IsSerializable) //PROTECTION
+                return string.Empty; //don't touch the field, CONSIDER: throwing an error
 
             if (obj.GetType().IsPrimitive || obj is string)
                 return obj.ToString();
@@ -58,6 +58,9 @@ namespace TgenSerializer
             {
                 //the field is a field class, the fieldValue is the value of this field (the actual object)
                 //for examle field is "int num = 5" and the field value is the 5
+                if (field.IsNotSerialized) //PROTECTION
+                    continue; //doesn't touch the object
+
                 object fieldValue = field.GetValue(obj);
                 
                 if (fieldValue == null)

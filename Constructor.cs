@@ -39,6 +39,10 @@ namespace TgenSerializer
             objData = objData.Remove(0, equals.Length); //remove the '=' at the end
             //Console.WriteLine(strType);
             Type typeOfObj = Type.GetType(strType);
+
+            if (!typeOfObj.IsSerializable) //PROTECTION
+                throw new SerializationException("The given object isn't serializable");
+
             //var instance = Activator.CreateInstance(typeOfObj); //creates an instance of object with it's constructor
             var instance = FormatterServices.GetUninitializedObject(typeOfObj); //creates an instance of object without calling it's constructor (default deserialization)
             Construction(ref instance, ref objData);
@@ -71,6 +75,9 @@ namespace TgenSerializer
                 //if the field isn't primitive, make a new instance of it
                 //NOTE: strings must be initialized
                 Type typeOfInstance = GetMemberType(fieldInfo);
+
+                if(!typeOfInstance.IsSerializable) //PROTECTION
+                    throw new SerializationException("The given object isn't serializable");
                 //I have no clue how to initialize a string object, this is my way to do it
                 object instance = typeOfInstance != typeof(string) ? FormatterServices.GetUninitializedObject(typeOfInstance) : string.Empty;
                 Construction(ref instance, ref objData); //proceed to construct the new field instance
@@ -154,7 +161,8 @@ namespace TgenSerializer
         private static Type GetMemberType(MemberInfo objType)
         {
             if (objType is FieldInfo)
-                return ((FieldInfo)objType).FieldType;
+                return ((FieldInfo)objType).IsNotSerialized ? throw new SerializationException("Member isn't serilizable") : ((FieldInfo)objType).FieldType;
+            //return ((FieldInfo)objType).FieldType;
             else
                 return ((PropertyInfo)objType).PropertyType;
         }
