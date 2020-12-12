@@ -1,27 +1,63 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 using System.Xml.Serialization;
 
 namespace TgenSerializer
 {
+
+    [Serializable]
+    public class MySeriClass : ISerializable
+    {
+        //public int[] vs;
+        public List<int> sake;
+
+        public MySeriClass()
+        {
+            //vs = new int[500];
+            sake = new List<int> { 57, 4 };
+        }
+
+        public MySeriClass(SerializationInfo info, StreamingContext context)
+        {
+            //vs = (int[])info.GetValue("arr", typeof(int[]));
+        }
+
+        public void GetObjectData(SerializationInfo info, StreamingContext context)
+        {
+            //info.AddValue("arr", vs);
+            info.AddValue("list", sake);
+        }
+    }
+
     [Serializable]
     public class TestClass
     {
+        public enum MyEnum
+        {
+            yes,
+            no,
+            meh
+        }
+
         public static int num3;
         int numProp2 { get; set; }
         int numProp { get { return num1; } set { num1 = value; } }
         int num1;
         int num2;
+        MyEnum myEnum;
         List<Btype> list1;
         Object failure;
         List<List<List<Btype>>> listFromTheUnspeakableHell;
-        TestClass thisone;
+        //TestClass thisone;
         public string str;
         Btype btyper;
 
@@ -29,6 +65,7 @@ namespace TgenSerializer
         //{ }
 
         public TestClass(int num1, int num2, string str) { this.num1 = num1; this.num2 = num2; this.str = str; btyper = new Btype(5);
+            myEnum = MyEnum.meh;
             list1 = new List<Btype>();
             list1.Add(new Btype(7));
             list1.Add(new Btype(9));
@@ -87,46 +124,89 @@ namespace TgenSerializer
             */
 
             DType constructTest = new DType(5, 8);
+            try
+            {
+                var data = Deconstructor.Deconstruct(Bitmappo()); //ERROR WHEN THERES A NULL AT THE END
+                Console.WriteLine("Done deconstruct");
+                for (int i = 0; i < 5; i++)
+                {
+                    Console.WriteLine();
+                }
+                Console.WriteLine("Starting construct");
+                Bitmap mySeris = (Bitmap)Constructor.Construct(data);
+                Console.WriteLine("done construct");
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.ToString());
+            }
+
             //Console.WriteLine(properties.Length);
             //Console.WriteLine(fields.Length);
             //Console.WriteLine(Deconstructor.Deconstruct(test));
-            string myObj = Deconstructor.Deconstruct(test);
-            Console.WriteLine(myObj);
-            TestClass constructed = (TestClass)Constructor.Construct(myObj);
-            Console.WriteLine(constructed.str);
-            Console.WriteLine(Deconstructor.Deconstruct(test));
+            //string myObj = Deconstructor.Deconstruct(new MySeriClass());
+            //Console.WriteLine(myObj);
+            //MySeriClass constructed = (MySeriClass)Constructor.Construct(myObj);
+            //Console.WriteLine();
+            //Console.WriteLine(constructed == null);
+            //Console.WriteLine(Deconstructor.Deconstruct(constructed));
+            //Type.GetType("yo", mymath, anothermath, true);
             //Console.WriteLine(constructed.cType.a + " AND " + constructed.b);
         }
+
+        private static Bitmap Bitmappo()
+        {
+            Rectangle bounds = Screen.GetBounds(Point.Empty);
+            Bitmap bitmap = new Bitmap(bounds.Width, bounds.Height);
+            Graphics g = Graphics.FromImage(bitmap);
+            g.CopyFromScreen(Point.Empty, Point.Empty, bounds.Size);
+            g.CompositingQuality = System.Drawing.Drawing2D.CompositingQuality.HighSpeed;
+            g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.HighSpeed;
+            g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.Low;
+            g.CompositingMode = System.Drawing.Drawing2D.CompositingMode.SourceOver;
+
+            return bitmap;
+        }
+
+        private static Type anothermath(Assembly arg1, string arg2, bool arg3)
+        {
+            throw new NotImplementedException();
+        }
+
+        private static Assembly mymath(AssemblyName arg)
+        {
+            throw new NotImplementedException();
+        }
         /*
-        public static string DeconstructorStarter(object obj)
-        {
-            StringBuilder objGraph = new StringBuilder();
-            return ("[" + obj.GetType() + "=" + Deconstructor(obj) + "]");
-            //must delcare the type at first so the constructor later on knows with what type it deals
-            //the properties and fields can be aligned later on by using the first type, like a puzzle
-            //the name of the object doesn't matter (therefore doesn't need to be saved) as well since the it will be changed anyways
-        }
+public static string DeconstructorStarter(object obj)
+{
+   StringBuilder objGraph = new StringBuilder();
+   return ("[" + obj.GetType() + "=" + Deconstructor(obj) + "]");
+   //must delcare the type at first so the constructor later on knows with what type it deals
+   //the properties and fields can be aligned later on by using the first type, like a puzzle
+   //the name of the object doesn't matter (therefore doesn't need to be saved) as well since the it will be changed anyways
+}
 
-        public static string Deconstructor(object obj)
-        {
-            if (obj.GetType().IsPrimitive || obj is string)
-                return obj.ToString();
+public static string Deconstructor(object obj)
+{
+   if (obj.GetType().IsPrimitive || obj is string)
+       return obj.ToString();
 
-            var bindingFlags = BindingFlags.Instance |
-                   BindingFlags.NonPublic |
-                   BindingFlags.Public; //specifies to get both public and non public fields and properties
-            var properties = obj.GetType().GetProperties(bindingFlags);
-            var fields = obj.GetType().GetFields(bindingFlags);
-            StringBuilder objGraph = new StringBuilder();
+   var bindingFlags = BindingFlags.Instance |
+          BindingFlags.NonPublic |
+          BindingFlags.Public; //specifies to get both public and non public fields and properties
+   var properties = obj.GetType().GetProperties(bindingFlags);
+   var fields = obj.GetType().GetFields(bindingFlags);
+   StringBuilder objGraph = new StringBuilder();
 
-            foreach (var property in properties)
-                objGraph.Append("[" + property.Name + "=" + Deconstructor(property.GetValue(obj)) + "]");
+   foreach (var property in properties)
+       objGraph.Append("[" + property.Name + "=" + Deconstructor(property.GetValue(obj)) + "]");
 
-            foreach (var field in fields)
-                objGraph.Append("[" + field.Name + "=" + Deconstructor(field.GetValue(obj)) + "]");
-            return objGraph.ToString();
+   foreach (var field in fields)
+       objGraph.Append("[" + field.Name + "=" + Deconstructor(field.GetValue(obj)) + "]");
+   return objGraph.ToString();
 
-        }
-        */
+}
+*/
     }
 }

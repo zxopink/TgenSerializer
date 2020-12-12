@@ -13,18 +13,26 @@ using System.Threading.Tasks;
 
 namespace TgenSerializer
 {
-    class TgenFormatter
+    public static class TgenFormatter
     {
-        public static void Serilize(Stream stream, object obj)
+        public static void Serialize(Stream stream, object obj)
         {
-            using (BinaryWriter writer = new BinaryWriter(stream, Encoding.ASCII))
-                writer.Write(Deconstructor.Deconstruct(obj));
+            BinaryWriter writer = new BinaryWriter(stream);
+            Console.WriteLine(obj.GetType());
+            writer.Write(Deconstructor.Deconstruct(obj));
+            Console.WriteLine("Done Writing");
+            writer.Flush();
         }
 
-        public static object Deserilize(Stream stream)
+        public static object Deserialize(Stream stream)
         {
-            using (BinaryReader reader = new BinaryReader(stream, Encoding.ASCII))
-                return Constructor.Construct(reader.ReadString());
+            BinaryReader reader = new BinaryReader(stream);
+            Console.WriteLine("Start reading");
+            string objGraphData = reader.ReadString();
+            Console.WriteLine("Constructing");
+            var obj = Constructor.Construct(objGraphData);
+            Console.WriteLine("Done building obj");
+            return obj;
         }
 
         public static string GetObjectGraph(object obj) => Deconstructor.Deconstruct(obj);
