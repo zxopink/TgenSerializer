@@ -9,26 +9,27 @@ using System.Threading.Tasks;
 
 namespace TgenSerializer
 {
-    public static class Constructor
+    public static class BinaryConstructor
     {
         //These fields are shared both by the constructor and constructor
         //NOTE: BetweenEnum and EndClass must have the same lenght since the serlizer treats them as the end of a class
         #region Global Fields
-        private const string startClass = GlobalOperations.startClass; //sign for the start of a class
-        private const string equals = GlobalOperations.equals; //sign for equals 
-        private const string endClass = GlobalOperations.endClass; //sign for the end of a class
-        private const string startEnum = GlobalOperations.startEnum; //start of array (enumer is sort of a collection like array and list, I like to call it array at time)
-        private const string betweenEnum = GlobalOperations.betweenEnum; //spaces between items/members in the array
-        private const string endEnum = GlobalOperations.endEnum; //end of array
-        private const string serializerEntry = GlobalOperations.serializerEntry; //start of serializer object
-        private const string serializerExit = GlobalOperations.serializerExit; //end of serializer object
-        private const string typeEntry = GlobalOperations.typeEntry; //divides the name and type of an object
-        private const string nullObj = GlobalOperations.nullObj; //sign for a nullObj (deprecated)
+        private static ByteBuilder startClass = BinaryGlobalOperations.startClass; //sign for the start of a class
+        private static ByteBuilder equals = BinaryGlobalOperations.equals; //sign for equals 
+        private static ByteBuilder endClass = BinaryGlobalOperations.endClass; //sign for the end of a class
+        private static ByteBuilder startEnum = BinaryGlobalOperations.startEnum; //start of array (enumer is sort of a collection like array and list, I like to call it array at time)
+        private static ByteBuilder betweenEnum = BinaryGlobalOperations.betweenEnum; //spaces between items/members in the array
+        private static ByteBuilder endEnum = BinaryGlobalOperations.endEnum; //end of array
+        private static ByteBuilder serializerEntry = BinaryGlobalOperations.serializerEntry; //start of serializer object
+        private static ByteBuilder serializerExit = BinaryGlobalOperations.serializerExit; //end of serializer object
+        private static ByteBuilder typeEntry = BinaryGlobalOperations.typeEntry; //divides the name and type of an object]
+        [Obsolete]
+        private static ByteBuilder nullObj = BinaryGlobalOperations.nullObj; //sign for a nullObj (deprecated)
 
-        private static BindingFlags bindingFlags = GlobalOperations.bindingFlags; //specifies to get both public and non public fields and properties
+        private const BindingFlags bindingFlags = GlobalOperations.bindingFlags; //specifies to get both public and non public fields and properties
         #endregion
 
-        public static object Construct(string objData)
+        public static object Construct(byte[] objData)
         {
             int startingPoint = 0;
             startingPoint += startClass.Length;
@@ -37,8 +38,8 @@ namespace TgenSerializer
 
             if (!typeOfObj.IsSerializable) //PROTECTION
                 throw new SerializationException("The given object isn't serializable");
-
-            return Construction(typeOfObj, ref objData, ref startingPoint); //starting point
+            object result = Construction(typeOfObj, ref objData, ref startingPoint); //starting point
+            return result;
         }
 
         /// <summary>
@@ -48,14 +49,14 @@ namespace TgenSerializer
         /// <param name="obj"></param>
         /// <param name="mainType"></param>
         /// <returns></returns>
-        private static object Construction(Type objType, ref string objData, ref int location)
+        private static object Construction(Type objType, ref byte[] objData, ref int location)
         {
-            if (objType.IsPrimitive || objType == typeof(string)) //primitive values
+            if (objType.IsPrimitive || objType == typeof(string)) //Primitive values
             {
                 return GetValue(objType, ref objData, ref location);
             }
 
-            if (typeof(ISerializable).IsAssignableFrom(objType))
+            if (typeof(ISerializable).IsAssignableFrom(objType)) //Serializable objects
             {
                 return SeriObjConstructor(objType, ref objData, ref location);
             }
@@ -95,30 +96,39 @@ namespace TgenSerializer
             #endregion
         }
 
-        private static object GetValue(Type objType, ref string dataInfo, ref int location)
+        private static object GetValue(Type objType, ref byte[] dataInfo, ref int location)
         {
-            string valueStr = GetSection(ref dataInfo, endClass, ref location);
+            ByteBuilder valueStr = GetSection(ref dataInfo, endClass, ref location);
             valueStr = valueStr == nullObj ? null : valueStr; //if the value is null, set it to null
-            return Convert.ChangeType(valueStr, objType); //converts the string into T (T stands for one of the many primitive types)
+            return ByteBuilder.ByteToPrimitive(objType, valueStr);
         }
 
-        private static object ArrObjConstructor(Type objType, ref string dataInfo, ref int location)
+        private static object ArrObjConstructor(Type objType, ref byte[] dataInfo, ref int location)
         {
             int length = int.Parse(GetSection(ref dataInfo, startEnum, ref location)); //removes the start "<" and gets the array's length
+            //ON THIN ICE
+            if (objType.IsArray && objType.Equals(typeof(byte[])))
+            {
+                byte[] byteArr = dataInfo.Skip(location).Take(length).ToArray();
+                location += byteArr.Length;
+                location += endEnum.Length;
+                location += endClass.Length;
+                return byteArr;
+            }
+
             var instance = (IList)Activator.CreateInstance(objType, new object[] { length });
             Type typeOfInstance = objType.GetElementType(); //Gets the type this array contrains, like the 'object' part of object[]
             for (int i = 0; !CheckHitOperator(dataInfo, endEnum, ref location); i++)
             {
                 object item = Construction(typeOfInstance, ref dataInfo, ref location);
                 instance[i] = item; //Can't use add!
-                //Console.WriteLine(i + " / " + length);
             }
             location += endEnum.Length;
             location += endClass.Length;
             return instance;
         }
 
-        private static object ListObjConstructor(Type objType, ref string dataInfo, ref int location)
+        private static object ListObjConstructor(Type objType, ref byte[] dataInfo, ref int location)
         {
             IList instance = (IList)Activator.CreateInstance(objType);
             Type typeOfInstance = objType.GetGenericArguments()[0];
@@ -133,7 +143,7 @@ namespace TgenSerializer
             return instance;
         }
 
-        private static object SeriObjConstructor(Type objType, ref string dataInfo, ref int location)
+        private static object SeriObjConstructor(Type objType, ref byte[] dataInfo, ref int location)
         {
             SerializationInfo info = new SerializationInfo(objType, new FormatterConverter());
             StreamingContext context = new StreamingContext(StreamingContextStates.All);
@@ -193,7 +203,7 @@ namespace TgenSerializer
         /// <param name="obj">Class of the field</param>
         /// <param name="dataInfo">The list of strings</param>
         /// <returns>Field inside the obj type</returns>
-        private static MemberInfo GetField(object obj, ref string dataInfo, ref int location)
+        private static MemberInfo GetField(object obj, ref byte[] dataInfo, ref int location)
         {
             location += startClass.Length;
             string fieldName = GetSection(ref dataInfo, equals, ref location);
@@ -211,18 +221,18 @@ namespace TgenSerializer
         /// <param name="dataInfo">The operation</param>
         /// <param name="syntax">Object graph</param>
         /// <returns>The required section</returns>
-        private static string GetSection(ref string dataInfo, string syntax, ref int location)
+        private static ByteBuilder GetSection(ref byte[] dataInfo, byte[] syntax, ref int location)
         {
-            string sectionStr = "";
+            ByteBuilder sectionByte = new ByteBuilder();
             for (int i = location; i < dataInfo.Length; i++)
             {
                 if (CheckHitOperator(dataInfo, syntax, ref location)) //when the program gets to "=" it continues
                     break;
-                sectionStr += dataInfo[i];
+                sectionByte.Append(dataInfo[i]);
                 location += 1;
             }
             location += syntax.Length;
-            return sectionStr;
+            return sectionByte;
         }
 
 
@@ -232,7 +242,7 @@ namespace TgenSerializer
         /// </summary>
         /// <param name="dataInfo">Object data</param>
         /// <returns>Name and type of the serialized object</returns>
-        private static KeyValuePair<string, Type> GetSerialiedName(ref string dataInfo, ref int location)
+        private static KeyValuePair<string, Type> GetSerialiedName(ref byte[] dataInfo, ref int location)
         {
             location += startClass.Length;
             string objName = GetSection(ref dataInfo, typeEntry, ref location);
@@ -249,11 +259,11 @@ namespace TgenSerializer
         /// <param name="data"></param>
         /// <param name="strOperator"></param>
         /// <returns></returns>
-        private static bool CheckHitOperator(string data, string strOperator,ref int location)
+        private static bool CheckHitOperator(byte[] data, byte[] byteOperator, ref int location)
         {
             //Could use string.substring instead
-            for (int i = 0; i < strOperator.Length; i++)
-                if (data[location + i] != strOperator[i])
+            for (int i = 0; i < byteOperator.Length; i++)
+                if (data[location + i] != byteOperator[i])
                     return false;
             return true;
         }

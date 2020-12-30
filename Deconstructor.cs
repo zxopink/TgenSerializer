@@ -32,7 +32,9 @@ namespace TgenSerializer
         public static string Deconstruct(object obj)
         {
             StringBuilder objGraph = new StringBuilder();
-            return (startClass + obj.GetType().AssemblyQualifiedName + equals + Deconstruction(obj) + endClass);
+            string result = (startClass + obj.GetType().AssemblyQualifiedName + equals + Deconstruction(obj) + endClass);
+            //Console.WriteLine("String Formatter Decompression: " + ByteBuilder.StrToBytes(result).Length);
+            return result;
             //must delcare the type at first so the constructor later on knows with what type it deals
             //the properties and fields can be aligned later on by using the first type, like a puzzle
             //the name of the object doesn't matter (therefore doesn't need to be saved) as well since the it will be changed anyways
@@ -117,6 +119,12 @@ namespace TgenSerializer
             var node = info.GetEnumerator();
             StringBuilder stringBuilder = new StringBuilder();
             stringBuilder.Append(serializerEntry);
+
+            ///Object Type Change
+            stringBuilder.Append(info.ObjectType.AssemblyQualifiedName);
+            stringBuilder.Append(equals);
+            ///Object Type Change
+
             while (node.MoveNext())
             {
                 stringBuilder.Append(startClass + node.Name + typeEntry + node.ObjectType + equals + Deconstruction(node.Value) + endClass);
@@ -129,8 +137,12 @@ namespace TgenSerializer
         private static string ListObjDeconstructor(IList list)
         {
             StringBuilder objGraph = new StringBuilder(); //TODO: ADD A WAY TO COUNT MEMEBERS AND AVOID NULL sends
-            if(list.GetType().IsArray)
+            if (list.GetType().IsArray)
+            {
+                //if (list is byte[])
+                    //return Encoding.UTF8.GetString((byte[])list); //these two lines are good but implemented to the binary formatter
                 objGraph.Append(list.Count);
+            }
             objGraph.Append(startEnum);
             foreach (var member in list)
             {
@@ -139,7 +151,7 @@ namespace TgenSerializer
                     //objGraph.Append(nullObj + betweenEnum); //No sending nulls
                     continue;
                 }
-                objGraph.Append(Deconstruction(member) + betweenEnum); //between Enum is like endclass
+                objGraph.Append(Deconstruction(member) + endClass); //between Enum is like endclass
             }
             objGraph.Append(endEnum);
             return objGraph.ToString();

@@ -4,9 +4,11 @@ using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.Remoting;
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Xml.Serialization;
@@ -101,6 +103,7 @@ namespace TgenSerializer
     {
         static void Main(string[] args)
         {
+            Console.WriteLine(BitConverter.ToInt32(BitConverter.GetBytes(312), 0));
             StringBuilder objGraph = new StringBuilder();
             TestClass test = new TestClass(5, 2, "ay");
             //Console.WriteLine(TestClass.num3);
@@ -124,23 +127,20 @@ namespace TgenSerializer
             */
 
             DType constructTest = new DType(5, 8);
-            try
+            for (int i = 0; i < 50; i++)
             {
-                var data = Deconstructor.Deconstruct(Bitmappo()); //ERROR WHEN THERES A NULL AT THE END
-                Console.WriteLine("Done deconstruct");
-                for (int i = 0; i < 5; i++)
-                {
-                    Console.WriteLine();
-                }
-                Console.WriteLine("Starting construct");
-                Bitmap mySeris = (Bitmap)Constructor.Construct(data);
-                Console.WriteLine("done construct");
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e.ToString());
-            }
 
+            var data = BinaryDeconstructor.Deconstruct(new TestClass(5,7,"yp")); //ERROR WHEN THERES A NULL AT THE END
+            Console.WriteLine(data);
+            Console.WriteLine(new ByteBuilder(data).GetBytes().Length + " string format");
+            //Console.WriteLine(new ByteBuilder(data).ToString());
+            //Bitmap objDone = FromBytes(((byte[])BinaryConstructor.Construct(data)));
+            //Console.WriteLine(objDone.Height);
+            Console.WriteLine("Start");
+            //var objOLD = Constructor.Construct(dataOLD); //ERROR WHEN THERES A NULL AT THE END
+            Console.WriteLine("Done");
+            }
+            //Console.WriteLine(objOLD);
             //Console.WriteLine(properties.Length);
             //Console.WriteLine(fields.Length);
             //Console.WriteLine(Deconstructor.Deconstruct(test));
@@ -154,7 +154,7 @@ namespace TgenSerializer
             //Console.WriteLine(constructed.cType.a + " AND " + constructed.b);
         }
 
-        private static Bitmap Bitmappo()
+        private static byte[] Bitmappo()
         {
             Rectangle bounds = Screen.GetBounds(Point.Empty);
             Bitmap bitmap = new Bitmap(bounds.Width, bounds.Height);
@@ -165,7 +165,49 @@ namespace TgenSerializer
             g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.Low;
             g.CompositingMode = System.Drawing.Drawing2D.CompositingMode.SourceOver;
 
-            return bitmap;
+            return ToByteArray(bitmap, System.Drawing.Imaging.ImageFormat.Jpeg);
+        }
+        private static byte[] ToByteArray(Image image, System.Drawing.Imaging.ImageFormat format)
+        {
+            using (MemoryStream ms = new MemoryStream())
+            {
+                image.Save(ms, format);
+                return ms.ToArray();
+            }
+        }
+
+        private static Bitmap FromBytes(byte[] bytes)
+        {
+            Bitmap bmp;
+            using (var ms = new MemoryStream(bytes))
+            {
+                bmp = new Bitmap(ms);
+            }
+            return bmp;
+        }
+        /// <summary>
+        /// Prints Console operations
+        /// </summary>
+        public static class CenterLog
+        {
+            /// <summary>
+            /// print to console (NO COLOR)
+            /// </summary>
+            /// <param name="text">the text</param>
+            public static void Print(string text)
+            {
+
+            }
+
+            /// <summary>
+            /// prints to console (WITH COLOR)
+            /// </summary>
+            /// <param name="text">the text</param>
+            /// <param name="color">the color</param>
+            public static void Print(string text, ConsoleColor color)
+            {
+
+            }
         }
 
         private static Type anothermath(Assembly arg1, string arg2, bool arg3)

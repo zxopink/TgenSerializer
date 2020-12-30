@@ -5,7 +5,7 @@
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProjectGuid>{0902C51A-DF9D-4908-911E-5D74518D29BC}</ProjectGuid>
-    <OutputType>Exe</OutputType>
+    <OutputType>Library</OutputType>
     <RootNamespace>TgenSerializer</RootNamespace>
     <AssemblyName>TgenSerializer</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
@@ -49,6 +49,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="BinaryConstructor.cs" />
+    <Compile Include="BinaryDeconstructor.cs" />
+    <Compile Include="ByteBuilder.cs" />
     <Compile Include="Constructor.cs" />
     <Compile Include="Deconstructor.cs" />
     <Compile Include="GlobalOperations.cs" />

@@ -1,0 +1,226 @@
+﻿using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
+using System.Runtime.CompilerServices;
+using System.Runtime.Serialization;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace TgenSerializer
+{
+    class BinaryDeconstructor
+    {
+        //These fields are shared both by the constructor and constructor
+        //NOTE: BetweenEnum and EndClass must have the same lenght since the serlizer treats them as the end of a class
+        #region Global Fields
+        private static ByteBuilder startClass = BinaryGlobalOperations.startClass; //sign for the start of a class
+        private static ByteBuilder equals = BinaryGlobalOperations.equals; //sign for equals 
+        private static ByteBuilder endClass = BinaryGlobalOperations.endClass; //sign for the end of a class
+        private static ByteBuilder startEnum = BinaryGlobalOperations.startEnum; //start of array (enumer is sort of a collection like array and list, I like to call it array at time)
+        private static ByteBuilder betweenEnum = BinaryGlobalOperations.betweenEnum; //spaces between items/members in the array
+        private static ByteBuilder endEnum = BinaryGlobalOperations.endEnum; //end of array
+        private static ByteBuilder serializerEntry = BinaryGlobalOperations.serializerEntry; //start of serializer object
+        private static ByteBuilder serializerExit = BinaryGlobalOperations.serializerExit; //end of serializer object
+        private static ByteBuilder typeEntry = BinaryGlobalOperations.typeEntry; //divides the name and type of an object]
+        [Obsolete]
+        private static ByteBuilder nullObj = BinaryGlobalOperations.nullObj; //sign for a nullObj (deprecated)
+
+        private const BindingFlags bindingFlags = GlobalOperations.bindingFlags; //specifies to get both public and non public fields and properties
+        #endregion
+
+        private static ByteBuilder StrToByte(string str) => Encoding.ASCII.GetBytes(str);
+
+        #region PrimitiveToByte
+        /// <summary>
+        /// Turns a primitive object to byte[]
+        /// (Taken from microsoft wiki) 
+        /// </summary>
+        /// <param name="obj">The primitive object</param>
+        /// <returns>The byte[]</returns>
+        private static byte[] GetPrimitiveByte(object obj)
+        {
+            if (obj is sbyte)
+            {
+                string byteString = ((sbyte)obj).ToString("X2");
+                return new byte[1] { Byte.Parse(byteString, System.Globalization.NumberStyles.HexNumber) };
+            }
+            else if (obj is byte)
+            {
+                return new byte[1] { (byte)obj };
+            }
+            else if (obj is short)
+            {
+                return BitConverter.GetBytes((short)obj);
+            }
+            else if (obj is int)
+            {
+                return BitConverter.GetBytes((int)obj);
+            }
+            else if (obj is string)
+            {
+                return Encoding.ASCII.GetBytes((string)obj);
+            }
+            else if (obj is long)
+            {
+                return BitConverter.GetBytes((long)obj);
+            }
+            else if (obj is ushort)
+            {
+                return BitConverter.GetBytes((ushort)obj);
+            }
+            else if (obj is uint)
+            {
+                return BitConverter.GetBytes((uint)obj);
+            }
+            else if (obj is ulong)
+            {
+                return BitConverter.GetBytes((ulong)obj);
+            }
+            else
+            {
+                throw new SerializationException("Primitive object of type " + obj.GetType() + " cannot be converted into bytes");
+            }
+        }
+        #endregion
+
+        public static byte[] Deconstruct(object obj)
+        {
+            ByteBuilder builder = new ByteBuilder();
+            byte[] result = (startClass + obj.GetType().AssemblyQualifiedName + equals + Deconstruction(obj) + endClass);
+            //Console.WriteLine("Binary Formatter Decompression: " + result.Length);
+            return result;
+            //must delcare the type at first so the constructor later on knows with what type it deals
+            //the properties and fields can be aligned later on by using the first type, like a puzzle
+            //the name of the object doesn't matter (therefore doesn't need to be saved) as well since the it will be changed anyways
+        }
+
+        private static ByteBuilder Deconstruction(object obj)
+        {
+            if (obj == null)
+                return nullObj;
+
+            if (obj.GetType().IsPrimitive || obj is string)
+                return ByteBuilder.PrimitiveToByte(obj);
+
+            if (!obj.GetType().IsSerializable) //PROTECTION
+                return new byte[0]; //don't touch the field, CONSIDER: throwing an error
+            else if (obj is ISerializable)
+            {
+                return SeriObjDeconstructor((ISerializable)obj);
+            }
+
+            if (obj is IList) //string is also an enum but will never reach here thanks to the primitive check
+            {
+                return ListObjDeconstructor((IList)obj);
+            }
+
+            var fields = obj.GetType().GetFields(bindingFlags);
+            ByteBuilder objGraph = new ByteBuilder();
+            #region SpecialCases
+            /*Special cases so far:
+             * 1. Object is null (Done)
+             * 2. Object points to itself in an infnite loop (Done)
+             * 3. backingField (Done)
+             * 4. Object is an enum/list/array (Done)
+            */
+            #endregion
+            foreach (var field in fields)
+            {
+                //the field is a field class, the fieldValue is the value of this field (the actual object)
+                //for examle field is "int num = 5" and the field value is the 5
+                if (field.IsNotSerialized) //PROTECTION
+                    continue; //Don't touch the object, was no meant to serialized
+
+                object fieldValue = field.GetValue(obj);
+
+                if (fieldValue == null) //No sending nulls
+                    continue; //Null object, ignore. spares the text in the writing
+
+                if (fieldValue == obj)
+                    throw new StackOverflowException("An object points to itself"); //Will cause an infinite loop, so just throw it
+
+                
+
+                //BACKING FIELDS ARE IGNORED BECAUSE THE PROPERTIES LINE SAVES THEM INSTEAD
+                //one of the few compiler generated attributes is backing fields
+                //backing field is a proprty with a get and set only, which has a hidden field behind it
+                //instead we save this field in the properties
+                if (Attribute.GetCustomAttribute(field, typeof(CompilerGeneratedAttribute)) == null) //this line checks for backing field
+                    objGraph.Append(startClass + field.Name + equals + Deconstruction(fieldValue) + endClass);
+                else
+                    objGraph.Append(startClass + GetNameOfBackingField(field.Name) + equals + Deconstruction(fieldValue) + endClass);
+            }
+            return objGraph;
+        }
+
+        private static ByteBuilder GetNameOfBackingField(string backingField)
+        {
+            //backing field follows by the pattern: "<'name'>k__BackingField"
+            StringBuilder name = new StringBuilder();
+            name.Append(backingField);
+            name.Remove(0, 1); //cuts the field's '<' at the start (NOT AN ENUM!)
+            name.Remove(backingField.Length - 17, 16); //cuts the '>k__BackingField' at the end
+            return name.ToString();
+        }
+
+        /// <summary>
+        /// deconstructs objects that inhert ISerializable
+        /// </summary>
+        /// <returns></returns>
+        private static ByteBuilder SeriObjDeconstructor(ISerializable obj)
+        {
+            SerializationInfo info = new SerializationInfo(obj.GetType(), new FormatterConverter());
+            StreamingContext context = new StreamingContext(StreamingContextStates.All);
+            obj.GetObjectData(info, context);
+            var node = info.GetEnumerator();
+            ByteBuilder byteBuilder = new ByteBuilder();
+            byteBuilder.Append(serializerEntry);
+
+            ///Object Type Change
+            byteBuilder.Append(info.ObjectType.AssemblyQualifiedName);
+            byteBuilder.Append(equals);
+            ///Object Type Change
+
+            while (node.MoveNext())
+            {
+                //bytebuilder adds to itself the new byte arrays, no need to assign
+                byteBuilder.Append(startClass + node.Name + typeEntry + node.ObjectType.ToString() + equals + Deconstruction(node.Value) + endClass);
+                //stringBuilder.Append(startClass + node.Name + typeEntry + node.ObjectType + equals + Deconstruct(node.Value) + endClass);
+            }
+            byteBuilder.Append(serializerExit);
+            return byteBuilder;
+        }
+
+        private static ByteBuilder ListObjDeconstructor(IList list)
+        {
+            ByteBuilder objGraph = new ByteBuilder(); //TODO: ADD A WAY TO COUNT MEMEBERS AND AVOID NULL sends
+            objGraph.Append(list.Count.ToString());
+            objGraph.Append(startEnum);
+            if (list.GetType().IsArray)
+            {
+                //if (list is List<byte>)
+                //    return ((List<byte>)list).ToArray();
+
+                if (list is byte[])
+                {
+                    objGraph.Append((byte[])list);
+                    objGraph.Append(endEnum);
+                    return objGraph;
+                }
+            }
+            foreach (var member in list)
+            {
+                if (member == null) //Don't add to the list,
+                {
+                    //objGraph.Append(nullObj + betweenEnum); //No sending nulls
+                    continue;
+                }
+                objGraph.Append(Deconstruction(member) + endClass); //between Enum is like endclass
+            }
+            objGraph.Append(endEnum);
+            return objGraph;
+        }
+    }
+}
