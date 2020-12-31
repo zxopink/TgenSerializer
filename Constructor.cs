@@ -168,7 +168,7 @@ namespace TgenSerializer
             if (objType is FieldInfo)
                 ((FieldInfo)objType).SetValue(instance, obj);
             else
-                ((PropertyInfo)objType).SetValue(instance, obj);
+                ((PropertyInfo)objType).GetSetMethod()?.Invoke(instance, new object[1] { obj }); //SetValue could be used but better not to
         }
 
         /// <summary>

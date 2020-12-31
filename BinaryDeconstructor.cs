@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace TgenSerializer
 {
-    class BinaryDeconstructor
+    public class BinaryDeconstructor
     {
         //These fields are shared both by the constructor and constructor
         //NOTE: BetweenEnum and EndClass must have the same lenght since the serlizer treats them as the end of a class
@@ -196,20 +196,22 @@ namespace TgenSerializer
         private static ByteBuilder ListObjDeconstructor(IList list)
         {
             ByteBuilder objGraph = new ByteBuilder(); //TODO: ADD A WAY TO COUNT MEMEBERS AND AVOID NULL sends
-            objGraph.Append(list.Count.ToString());
-            objGraph.Append(startEnum);
+            //THIS IS A BIG NONO (spent too much on to find these issue)
+            //IF ANOTHER UNSOLVALBE ISSUE RAISES LISTS ARE YOUR FIRST WARNING
             if (list.GetType().IsArray)
             {
                 //if (list is List<byte>)
                 //    return ((List<byte>)list).ToArray();
-
+                objGraph.Append(list.Count.ToString());
                 if (list is byte[])
                 {
+                    objGraph.Append(startEnum);
                     objGraph.Append((byte[])list);
                     objGraph.Append(endEnum);
                     return objGraph;
                 }
             }
+            objGraph.Append(startEnum);
             foreach (var member in list)
             {
                 if (member == null) //Don't add to the list,

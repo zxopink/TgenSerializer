@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace TgenSerializer
 {
-    class ByteBuilder
+    public class ByteBuilder
     {
         List<byte[]> list;
 
