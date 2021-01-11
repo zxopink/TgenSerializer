@@ -15,22 +15,22 @@ namespace TgenSerializer
         //These fields are shared both by the constructor and constructor
         //NOTE: BetweenEnum and EndClass must have the same lenght since the serlizer treats them as the end of a class
         #region Global Fields
-        private static ByteBuilder startClass = BinaryGlobalOperations.startClass; //sign for the start of a class
-        private static ByteBuilder equals = BinaryGlobalOperations.equals; //sign for equals 
-        private static ByteBuilder endClass = BinaryGlobalOperations.endClass; //sign for the end of a class
-        private static ByteBuilder startEnum = BinaryGlobalOperations.startEnum; //start of array (enumer is sort of a collection like array and list, I like to call it array at time)
-        private static ByteBuilder betweenEnum = BinaryGlobalOperations.betweenEnum; //spaces between items/members in the array
-        private static ByteBuilder endEnum = BinaryGlobalOperations.endEnum; //end of array
-        private static ByteBuilder serializerEntry = BinaryGlobalOperations.serializerEntry; //start of serializer object
-        private static ByteBuilder serializerExit = BinaryGlobalOperations.serializerExit; //end of serializer object
-        private static ByteBuilder typeEntry = BinaryGlobalOperations.typeEntry; //divides the name and type of an object]
+        private static BinaryBuilder startClass = BinaryGlobalOperations.startClass; //sign for the start of a class
+        private static BinaryBuilder equals = BinaryGlobalOperations.equals; //sign for equals 
+        private static BinaryBuilder endClass = BinaryGlobalOperations.endClass; //sign for the end of a class
+        private static BinaryBuilder startEnum = BinaryGlobalOperations.startEnum; //start of array (enumer is sort of a collection like array and list, I like to call it array at time)
+        private static BinaryBuilder betweenEnum = BinaryGlobalOperations.betweenEnum; //spaces between items/members in the array
+        private static BinaryBuilder endEnum = BinaryGlobalOperations.endEnum; //end of array
+        private static BinaryBuilder serializerEntry = BinaryGlobalOperations.serializerEntry; //start of serializer object
+        private static BinaryBuilder serializerExit = BinaryGlobalOperations.serializerExit; //end of serializer object
+        private static BinaryBuilder typeEntry = BinaryGlobalOperations.typeEntry; //divides the name and type of an object]
         [Obsolete]
-        private static ByteBuilder nullObj = BinaryGlobalOperations.nullObj; //sign for a nullObj (deprecated)
+        private static BinaryBuilder nullObj = BinaryGlobalOperations.nullObj; //sign for a nullObj (deprecated)
 
         private const BindingFlags bindingFlags = GlobalOperations.bindingFlags; //specifies to get both public and non public fields and properties
         #endregion
 
-        private static ByteBuilder StrToByte(string str) => Encoding.ASCII.GetBytes(str);
+        private static BinaryBuilder StrToByte(string str) => Encoding.ASCII.GetBytes(str);
 
         #region PrimitiveToByte
         /// <summary>
@@ -87,7 +87,7 @@ namespace TgenSerializer
 
         public static byte[] Deconstruct(object obj)
         {
-            ByteBuilder builder = new ByteBuilder();
+            BinaryBuilder builder = new BinaryBuilder();
             byte[] result = (startClass + obj.GetType().AssemblyQualifiedName + equals + Deconstruction(obj) + endClass);
             //Console.WriteLine("Binary Formatter Decompression: " + result.Length);
             return result;
@@ -96,13 +96,13 @@ namespace TgenSerializer
             //the name of the object doesn't matter (therefore doesn't need to be saved) as well since the it will be changed anyways
         }
 
-        private static ByteBuilder Deconstruction(object obj)
+        private static BinaryBuilder Deconstruction(object obj)
         {
             if (obj == null)
                 return nullObj;
 
             if (obj.GetType().IsPrimitive || obj is string)
-                return ByteBuilder.PrimitiveToByte(obj);
+                return BinaryBuilder.PrimitiveToByte(obj);
 
             if (!obj.GetType().IsSerializable) //PROTECTION
                 return new byte[0]; //don't touch the field, CONSIDER: throwing an error
@@ -117,7 +117,7 @@ namespace TgenSerializer
             }
 
             var fields = obj.GetType().GetFields(bindingFlags);
-            ByteBuilder objGraph = new ByteBuilder();
+            BinaryBuilder objGraph = new BinaryBuilder();
             #region SpecialCases
             /*Special cases so far:
              * 1. Object is null (Done)
@@ -155,7 +155,7 @@ namespace TgenSerializer
             return objGraph;
         }
 
-        private static ByteBuilder GetNameOfBackingField(string backingField)
+        private static BinaryBuilder GetNameOfBackingField(string backingField)
         {
             //backing field follows by the pattern: "<'name'>k__BackingField"
             StringBuilder name = new StringBuilder();
@@ -169,13 +169,13 @@ namespace TgenSerializer
         /// deconstructs objects that inhert ISerializable
         /// </summary>
         /// <returns></returns>
-        private static ByteBuilder SeriObjDeconstructor(ISerializable obj)
+        private static BinaryBuilder SeriObjDeconstructor(ISerializable obj)
         {
             SerializationInfo info = new SerializationInfo(obj.GetType(), new FormatterConverter());
             StreamingContext context = new StreamingContext(StreamingContextStates.All);
             obj.GetObjectData(info, context);
             var node = info.GetEnumerator();
-            ByteBuilder byteBuilder = new ByteBuilder();
+            BinaryBuilder byteBuilder = new BinaryBuilder();
             byteBuilder.Append(serializerEntry);
 
             ///Object Type Change
@@ -193,9 +193,9 @@ namespace TgenSerializer
             return byteBuilder;
         }
 
-        private static ByteBuilder ListObjDeconstructor(IList list)
+        private static BinaryBuilder ListObjDeconstructor(IList list)
         {
-            ByteBuilder objGraph = new ByteBuilder(); //TODO: ADD A WAY TO COUNT MEMEBERS AND AVOID NULL sends
+            BinaryBuilder objGraph = new BinaryBuilder(); //TODO: ADD A WAY TO COUNT MEMEBERS AND AVOID NULL sends
             //THIS IS A BIG NONO (spent too much on to find these issue)
             //IF ANOTHER UNSOLVALBE ISSUE RAISES LISTS ARE YOUR FIRST WARNING
             if (list.GetType().IsArray)

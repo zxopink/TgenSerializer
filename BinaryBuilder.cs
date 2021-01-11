@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace TgenSerializer
 {
-    public class ByteBuilder
+    public class BinaryBuilder
     {
         List<byte[]> list;
 
@@ -18,32 +18,32 @@ namespace TgenSerializer
             } }
 
         #region Constructors
-        public ByteBuilder(byte[] arr)
+        public BinaryBuilder(byte[] arr)
         {
             list = new List<byte[]>();
             list.Add(arr);
         }
-        public ByteBuilder(byte b)
+        public BinaryBuilder(byte b)
         {
             list = new List<byte[]>();
             byte[] arr = new byte[1];
             arr[0] = b;
             list.Add(arr);
         }
-        public ByteBuilder(ByteBuilder builder) {
+        public BinaryBuilder(BinaryBuilder builder) {
             list = builder.list.ToList();
         }
-        public ByteBuilder() { list = new List<byte[]>(); }
+        public BinaryBuilder() { list = new List<byte[]>(); }
         #endregion
 
-        public ByteBuilder Append(ByteBuilder obj)
+        public BinaryBuilder Append(BinaryBuilder obj)
         {
             list.AddRange(obj.list);
             return this;
         }
 
-        private ByteBuilder AddByteArr(byte[] arr) { list.Add(arr); return this; }
-        private ByteBuilder RemoveByteArr(byte[] arr) { list.Remove(arr); return this; }
+        private BinaryBuilder AddByteArr(byte[] arr) { list.Add(arr); return this; }
+        private BinaryBuilder RemoveByteArr(byte[] arr) { list.Remove(arr); return this; }
 
         public byte[] GetBytes()
         {
@@ -185,11 +185,11 @@ namespace TgenSerializer
         //{ return new ByteBuilder(a).Append(b); }
         //public static ByteBuilder operator +(ByteBuilder a, string str)
         //{ byte[] b = StrToBytes(str); return new ByteBuilder(a).Append(b); }
-        public static ByteBuilder operator +(ByteBuilder a, ByteBuilder b)
-        { return new ByteBuilder(a).Append(b); }
+        public static BinaryBuilder operator +(BinaryBuilder a, BinaryBuilder b)
+        { return new BinaryBuilder(a).Append(b); }
 
 
-        public static ByteBuilder operator -(ByteBuilder a, byte[] b)
+        public static BinaryBuilder operator -(BinaryBuilder a, byte[] b)
         { return a.RemoveByteArr(b); }
 
         //explicit keyword means it requires a cast syntax
@@ -197,19 +197,19 @@ namespace TgenSerializer
         //public static explicit operator ByteBuilder(byte b) => new ByteBuilder(b);
 
         //implicit keyword means it automatically converts the types (Implicit conversions don't require special syntax to be invoked)
-        public static implicit operator byte[](ByteBuilder builder) => builder.GetBytes();
-        public static implicit operator ByteBuilder(byte[] b) => new ByteBuilder(b);
-        public static implicit operator string(ByteBuilder builder) => BytesToStr(builder);
+        public static implicit operator byte[](BinaryBuilder builder) => builder.GetBytes();
+        public static implicit operator BinaryBuilder(byte[] b) => new BinaryBuilder(b);
+        public static implicit operator string(BinaryBuilder builder) => BytesToStr(builder);
 
-        public static implicit operator ByteBuilder(sbyte obj) => new ByteBuilder(PrimitiveToByte(obj));
-        public static implicit operator ByteBuilder(byte obj) => new ByteBuilder(PrimitiveToByte(obj));
-        public static implicit operator ByteBuilder(short obj) => new ByteBuilder(PrimitiveToByte(obj));
-        public static implicit operator ByteBuilder(int obj) => new ByteBuilder(PrimitiveToByte(obj));
-        public static implicit operator ByteBuilder(string str) => new ByteBuilder(StrToBytes(str));
-        public static implicit operator ByteBuilder(long obj) => new ByteBuilder(PrimitiveToByte(obj));
-        public static implicit operator ByteBuilder(ushort obj) => new ByteBuilder(PrimitiveToByte(obj));
-        public static implicit operator ByteBuilder(uint obj) => new ByteBuilder(PrimitiveToByte(obj));
-        public static implicit operator ByteBuilder(ulong obj) => new ByteBuilder(PrimitiveToByte(obj));
+        public static implicit operator BinaryBuilder(sbyte obj) => new BinaryBuilder(PrimitiveToByte(obj));
+        public static implicit operator BinaryBuilder(byte obj) => new BinaryBuilder(PrimitiveToByte(obj));
+        public static implicit operator BinaryBuilder(short obj) => new BinaryBuilder(PrimitiveToByte(obj));
+        public static implicit operator BinaryBuilder(int obj) => new BinaryBuilder(PrimitiveToByte(obj));
+        public static implicit operator BinaryBuilder(string str) => new BinaryBuilder(StrToBytes(str));
+        public static implicit operator BinaryBuilder(long obj) => new BinaryBuilder(PrimitiveToByte(obj));
+        public static implicit operator BinaryBuilder(ushort obj) => new BinaryBuilder(PrimitiveToByte(obj));
+        public static implicit operator BinaryBuilder(uint obj) => new BinaryBuilder(PrimitiveToByte(obj));
+        public static implicit operator BinaryBuilder(ulong obj) => new BinaryBuilder(PrimitiveToByte(obj));
 
         public override string ToString()
         {

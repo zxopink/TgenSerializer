@@ -132,7 +132,7 @@ namespace TgenSerializer
 
             var data = BinaryDeconstructor.Deconstruct(new TestClass(5,7,"yp")); //ERROR WHEN THERES A NULL AT THE END
             Console.WriteLine(data);
-            Console.WriteLine(new ByteBuilder(data).GetBytes().Length + " string format");
+            Console.WriteLine(new BinaryBuilder(data).GetBytes().Length + " string format");
             //Console.WriteLine(new ByteBuilder(data).ToString());
             //Bitmap objDone = FromBytes(((byte[])BinaryConstructor.Construct(data)));
             //Console.WriteLine(objDone.Height);

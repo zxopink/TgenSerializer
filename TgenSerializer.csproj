@@ -51,7 +51,7 @@
   <ItemGroup>
     <Compile Include="BinaryConstructor.cs" />
     <Compile Include="BinaryDeconstructor.cs" />
-    <Compile Include="ByteBuilder.cs" />
+    <Compile Include="BinaryBuilder.cs" />
     <Compile Include="Constructor.cs" />
     <Compile Include="Deconstructor.cs" />
     <Compile Include="GlobalOperations.cs" />
