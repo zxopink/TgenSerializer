@@ -104,6 +104,10 @@ namespace TgenSerializer
             {
                 return BitConverter.GetBytes((float)obj);
             }
+            else if (obj is double)
+            {
+                return BitConverter.GetBytes((double)obj);
+            }
             else if (obj is ushort)
             {
                 return BitConverter.GetBytes((ushort)obj);
@@ -151,6 +155,10 @@ namespace TgenSerializer
             else if (objType.Equals(typeof(float)))
             {
                 return BitConverter.ToSingle(objData, startIndex);
+            }
+            else if (objType.Equals(typeof(double)))
+            {
+                return BitConverter.ToDouble(objData, startIndex);
             }
             else if (objType.Equals(typeof(ushort)))
             {
