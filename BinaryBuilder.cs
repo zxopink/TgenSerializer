@@ -96,6 +96,10 @@ namespace TgenSerializer
             {
                 return StrToBytes((string)obj);
             }
+            else if (obj is bool)
+            {
+                return BitConverter.GetBytes((bool)obj);
+            }
             else if (obj is long)
             {
                 return BitConverter.GetBytes((long)obj);
@@ -147,6 +151,10 @@ namespace TgenSerializer
             else if (objType.Equals(typeof(string)))
             {
                 return BytesToStr(objData.Skip(startIndex).ToArray());
+            }
+            else if (objType.Equals(typeof(bool)))
+            {
+                return BitConverter.ToBoolean(objData, startIndex);
             }
             else if (objType.Equals(typeof(long)))
             {
