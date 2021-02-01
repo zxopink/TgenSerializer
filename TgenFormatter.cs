@@ -1,6 +1,8 @@
 ﻿using System;
 using System.IO;
 using System.Runtime.Serialization;
+using System.Runtime.Serialization.Formatters.Binary;
+using System.Threading.Tasks;
 using static TgenSerializer.TgenFormatterSettings;
 
 namespace TgenSerializer
@@ -36,7 +38,6 @@ namespace TgenSerializer
                     object obj = BinaryConstructor.Construct(packet);
                     return obj;
                 case FormatCompression.String:
-                    //this case works fine
                     string objGraphData = reader.ReadString();
                     return Constructor.Construct(objGraphData);
                 default:

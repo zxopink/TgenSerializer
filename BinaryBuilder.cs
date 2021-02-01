@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.Serialization;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -126,7 +127,7 @@ namespace TgenSerializer
             }
             else
             {
-                throw new Exception("Primitive object of type " + obj.GetType() + " cannot be converted into bytes (ByteBuilder casting exception)");
+                throw new SerializationException("Primitive object of type " + obj.GetType() + " cannot be converted into bytes");
             }
         }
         public static object ByteToPrimitive(Type objType, byte[] objData, int startIndex = 0)
@@ -182,7 +183,7 @@ namespace TgenSerializer
             }
             else
             {
-                throw new Exception("Type " + objType + " cannot be converted into object from bytes (ByteBuilder casting exception)");
+                throw new SerializationException("Type " + objType + " cannot be converted into object from bytes");
             }
         }
 
