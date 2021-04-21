@@ -187,7 +187,7 @@ namespace TgenSerializer
             }
         }
 
-        public static byte[] StrToBytes(string str) => Encoding.ASCII.GetBytes(str);
+        public static byte[] StrToBytes(string str) => Encoding.UTF8.GetBytes(str); //THIS LINE USED TO BE ASCII, COULD BREAK EVERYTHING
         public static string BytesToStr(byte[] b) => Encoding.UTF8.GetString(b);
 
         //public static ByteBuilder operator +(ByteBuilder a, byte[] b)
@@ -222,6 +222,9 @@ namespace TgenSerializer
         public static implicit operator BinaryBuilder(byte obj) => new BinaryBuilder(PrimitiveToByte(obj));
         public static implicit operator BinaryBuilder(short obj) => new BinaryBuilder(PrimitiveToByte(obj));
         public static implicit operator BinaryBuilder(int obj) => new BinaryBuilder(PrimitiveToByte(obj));
+        public static implicit operator BinaryBuilder(double obj) => new BinaryBuilder(PrimitiveToByte(obj));
+        public static implicit operator BinaryBuilder(float obj) => new BinaryBuilder(PrimitiveToByte(obj));
+        public static implicit operator BinaryBuilder(bool obj) => new BinaryBuilder(PrimitiveToByte(obj));
         public static implicit operator BinaryBuilder(string str) => new BinaryBuilder(StrToBytes(str));
         public static implicit operator BinaryBuilder(long obj) => new BinaryBuilder(PrimitiveToByte(obj));
         public static implicit operator BinaryBuilder(ushort obj) => new BinaryBuilder(PrimitiveToByte(obj));

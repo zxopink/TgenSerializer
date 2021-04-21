@@ -1,8 +1,6 @@
 ﻿using System;
 using System.IO;
 using System.Runtime.Serialization;
-using System.Runtime.Serialization.Formatters.Binary;
-using System.Threading.Tasks;
 using static TgenSerializer.TgenFormatterSettings;
 
 namespace TgenSerializer
@@ -13,6 +11,25 @@ namespace TgenSerializer
         {
             BinaryWriter writer = new BinaryWriter(stream);
             switch (Compression)
+            {
+                case FormatCompression.Binary:
+                    byte[] packet = BinaryDeconstructor.Deconstruct(obj);
+                    writer.Write(packet.Length);
+                    writer.Write(packet);;
+                    break;
+                case FormatCompression.String:
+                    writer.Write(Deconstructor.Deconstruct(obj));
+                    break;
+                default:
+                    throw new SerializationException("Please choose a format compression");
+            }
+            writer.Flush();
+        }
+
+        public static void Serialize(Stream stream, object obj, FormatCompression compression)
+        {
+            BinaryWriter writer = new BinaryWriter(stream);
+            switch (compression)
             {
                 case FormatCompression.Binary:
                     byte[] packet = BinaryDeconstructor.Deconstruct(obj);
@@ -34,7 +51,30 @@ namespace TgenSerializer
             switch (Compression)
             {
                 case FormatCompression.Binary:
+                    int defaultTimeout = stream.ReadTimeout;
+                    //stream.ReadTimeout = 10; //Like really, how long does the computer need to read a 4 byte signed integer? Change if needed
                     byte[] packet = reader.ReadBytes(reader.ReadInt32());
+                    stream.ReadTimeout = defaultTimeout;
+                    object obj = BinaryConstructor.Construct(packet);
+                    return obj;
+                case FormatCompression.String:
+                    string objGraphData = reader.ReadString();
+                    return Constructor.Construct(objGraphData);
+                default:
+                    throw new SerializationException("Please choose a format compression");
+            }
+        }
+
+        public static object Deserialize(Stream stream, FormatCompression compression)
+        {
+            BinaryReader reader = new BinaryReader(stream);
+            switch (compression)
+            {
+                case FormatCompression.Binary:
+                    int defaultTimeout = stream.ReadTimeout;
+                    //stream.ReadTimeout = 10; //Like really, how long does the computer need to read a 4 byte signed integer? Change if needed
+                    byte[] packet = reader.ReadBytes(reader.ReadInt32());
+                    stream.ReadTimeout = defaultTimeout;
                     object obj = BinaryConstructor.Construct(packet);
                     return obj;
                 case FormatCompression.String:
