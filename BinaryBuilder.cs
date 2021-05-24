@@ -7,6 +7,12 @@ using System.Threading.Tasks;
 
 namespace TgenSerializer
 {
+    /// <summary>
+    /// Similar class to StringBuilder.
+    /// It makes the concept of byte array appending much easier and way less memory consuming.
+    /// So the program can append many byte arrays in a significant speed and while maintaining high preformance.
+    /// Note: extreme use of this class should require basic understanding of memory management in object oriented languages.
+    /// </summary>
     public class BinaryBuilder
     {
         List<byte[]> list;

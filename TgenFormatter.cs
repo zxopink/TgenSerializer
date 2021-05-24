@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Net.Sockets;
 using System.Runtime.Serialization;
 using static TgenSerializer.TgenFormatterSettings;
 
@@ -15,7 +16,7 @@ namespace TgenSerializer
                 case FormatCompression.Binary:
                     byte[] packet = BinaryDeconstructor.Deconstruct(obj);
                     writer.Write(packet.Length);
-                    writer.Write(packet);;
+                    writer.Write(packet);
                     break;
                 case FormatCompression.String:
                     writer.Write(Deconstructor.Deconstruct(obj));
@@ -52,9 +53,8 @@ namespace TgenSerializer
             {
                 case FormatCompression.Binary:
                     int defaultTimeout = stream.ReadTimeout;
-                    //stream.ReadTimeout = 10; //Like really, how long does the computer need to read a 4 byte signed integer? Change if needed
+                    stream.ReadTimeout = 10; //Like really, how long does the computer need to read a 4 byte signed integer? Change if needed
                     byte[] packet = reader.ReadBytes(reader.ReadInt32());
-                    stream.ReadTimeout = defaultTimeout;
                     object obj = BinaryConstructor.Construct(packet);
                     return obj;
                 case FormatCompression.String:
@@ -72,9 +72,8 @@ namespace TgenSerializer
             {
                 case FormatCompression.Binary:
                     int defaultTimeout = stream.ReadTimeout;
-                    //stream.ReadTimeout = 10; //Like really, how long does the computer need to read a 4 byte signed integer? Change if needed
+                    stream.ReadTimeout = 10; //Like really, how long does the computer need to read a 4 byte signed integer? Change if needed
                     byte[] packet = reader.ReadBytes(reader.ReadInt32());
-                    stream.ReadTimeout = defaultTimeout;
                     object obj = BinaryConstructor.Construct(packet);
                     return obj;
                 case FormatCompression.String:

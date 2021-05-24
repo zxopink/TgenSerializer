@@ -23,7 +23,7 @@ namespace TgenSerializer
     /// !- this formatter is careful with what it constructs and deconstructs
     /// 
     /// -Binary formatter takes much more space specifying types for each payload which is expensive at fast phased networking environments
-    /// !-this formatter assumes both sides are using the same type (if not it throws an exception) and fill gaps thanks to a clever recursion management
+    /// !-this formatter assumes both sides are using the same type (The same binary file, DLL) && (if not it throws an exception) and fill gaps thanks to a clever recursion management
 
     public static class GlobalOperations
     {   
