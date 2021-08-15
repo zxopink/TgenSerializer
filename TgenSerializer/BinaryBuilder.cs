@@ -46,6 +46,13 @@ namespace TgenSerializer
         {
             list.AddRange(obj.list);
             return this;
+
+            BinaryBuilder hello = new BinaryBuilder("Hello ");
+            byte[] world = BinaryBuilder.StrToBytes("World");
+            byte[] helloWorld = hello + world;
+
+            BinaryBuilder result = helloWorld;
+            Console.WriteLine(result); //Hello world
         }
 
         private BinaryBuilder AddByteArr(byte[] arr) { list.Add(arr); return this; }
@@ -223,6 +230,8 @@ namespace TgenSerializer
         public static implicit operator BinaryBuilder(ushort obj) => new BinaryBuilder(PrimitiveToByte(obj));
         public static implicit operator BinaryBuilder(uint obj) => new BinaryBuilder(PrimitiveToByte(obj));
         public static implicit operator BinaryBuilder(ulong obj) => new BinaryBuilder(PrimitiveToByte(obj));
+
+        //Add implicit ByteToPrimitive operations
 
         public override string ToString()
         {
