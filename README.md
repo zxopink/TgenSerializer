@@ -20,7 +20,7 @@ The returned object has all the properties of the serialized one.
 
 ## BinaryBuilder
 The binary builder is a tool class that works just like `StringBuilder` but for bytes.
-It's used to make the work with arrays of bytes much easier and simple.
+It's used to make the work with arrays of bytes much easier and simple. (Like pythons')
 
 With the BinaryBuilder you can use mathematical operations (`+` & `-`) to connect arrays of bytes or remove them.
 It also includes implicit cast operations to easily cast primitive objects into bytes.  
