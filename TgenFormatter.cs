@@ -1,6 +1,4 @@
-﻿using System;
-using System.IO;
-using System.Net.Sockets;
+﻿using System.IO;
 using System.Runtime.Serialization;
 using static TgenSerializer.TgenFormatterSettings;
 
@@ -52,8 +50,8 @@ namespace TgenSerializer
             switch (Compression)
             {
                 case FormatCompression.Binary:
-                    int defaultTimeout = stream.ReadTimeout;
-                    stream.ReadTimeout = 10; //Like really, how long does the computer need to read a 4 byte signed integer? Change if needed
+                    //int defaultTimeout = stream.ReadTimeout;
+                    //stream.ReadTimeout = 10; //Like really, how long does the computer need to read a 4 byte signed integer? Change if needed
                     byte[] packet = reader.ReadBytes(reader.ReadInt32());
                     object obj = BinaryConstructor.Construct(packet);
                     return obj;
@@ -71,8 +69,8 @@ namespace TgenSerializer
             switch (compression)
             {
                 case FormatCompression.Binary:
-                    int defaultTimeout = stream.ReadTimeout;
-                    stream.ReadTimeout = 10; //Like really, how long does the computer need to read a 4 byte signed integer? Change if needed
+                    //int defaultTimeout = stream.ReadTimeout;
+                    //stream.ReadTimeout = 10; //Like really, how long does the computer need to read a 4 byte signed integer? Change if needed
                     byte[] packet = reader.ReadBytes(reader.ReadInt32());
                     object obj = BinaryConstructor.Construct(packet);
                     return obj;

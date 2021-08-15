@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.Serialization;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace TgenSerializer
 {
@@ -144,7 +143,6 @@ namespace TgenSerializer
             }
             else if (objType.Equals(typeof(byte)))
             {
-                //needs to add to the start index?
                 return objData[startIndex];
             }
             else if (objType.Equals(typeof(short)))
@@ -196,19 +194,8 @@ namespace TgenSerializer
         public static byte[] StrToBytes(string str) => Encoding.UTF8.GetBytes(str); //THIS LINE USED TO BE ASCII, COULD BREAK EVERYTHING
         public static string BytesToStr(byte[] b) => Encoding.UTF8.GetString(b);
 
-        //public static ByteBuilder operator +(ByteBuilder a, byte[] b)
-        //{ a.AddByteArr(b); return a; }
-        //public static ByteBuilder operator +(ByteBuilder a, string str)
-        //{ byte[] b = StrToBytes(str); a.AddByteArr(b); return a; }
-        //public static ByteBuilder operator +(ByteBuilder a, ByteBuilder b)
-        //{ a.Append(b); return a; }
-
-        //SHOULD LOOK AT THESE AGAIN, CALLING THE ByteBuilder CONSTRUCTOR THAT TAKES A ByteBuilder POINTS AT THE OLD LIST AND DOESN'T MAKE A NEW ONE
-        //public static ByteBuilder operator +(ByteBuilder a, byte[] b)
-        //{ return new ByteBuilder(a).Append(b); }
-        //public static ByteBuilder operator +(ByteBuilder a, string str)
-        //{ byte[] b = StrToBytes(str); return new ByteBuilder(a).Append(b); }
-        public static BinaryBuilder operator +(BinaryBuilder a, BinaryBuilder b)
+        //If b = byte[], the implicit operator will convert it to a BinaryBuilder
+        public static BinaryBuilder operator +(BinaryBuilder a, BinaryBuilder b) 
         { return new BinaryBuilder(a).Append(b); }
 
 

@@ -259,10 +259,6 @@ namespace TgenSerializer
         /// <returns></returns>
         private static bool CheckHitOperator(byte[] data, byte[] byteOperator, ref int location)
         {
-            //Could use string.substring instead
-            //Console.WriteLine(new ByteBuilder(byteOperator).ToString());
-            //Console.WriteLine(data.Length + " /  " + location);
-            //Console.WriteLine(new ByteBuilder(data.ToList().GetRange(location, data.Length - location).ToArray()).ToString());
             for (int i = 0; i < byteOperator.Length; i++)
                 if (data[location + i] != byteOperator[i])
                     return false;
