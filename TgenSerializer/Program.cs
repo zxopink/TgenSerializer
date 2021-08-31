@@ -103,55 +103,21 @@ namespace TgenSerializer
     {
         static void Main(string[] args)
         {
-            Console.WriteLine(BitConverter.ToInt32(BitConverter.GetBytes(312), 0));
-            StringBuilder objGraph = new StringBuilder();
             TestClass test = new TestClass(5, 2, "ay");
-            //Console.WriteLine(TestClass.num3);
-            var bindingFlags = BindingFlags.Instance |
-                   BindingFlags.NonPublic |
-                   BindingFlags.Public;
-            var properties = test.GetType().GetProperties(bindingFlags);
-            var fields = test.GetType().GetFields(bindingFlags);
+            string target = "C:/Users/yoavh/OneDrive/Desktop/PonyDetails.txt";
 
-            /*
-            BinaryFormatter formatter = new BinaryFormatter();
-            string filePath = "C:/Users/yoavh/OneDrive/Desktop/C# Seril/seri.txt";
-            if (File.Exists(filePath))
-                File.Delete(filePath);
-            FileStream strm = new FileStream(filePath, FileMode.CreateNew);
-            formatter.Serialize(strm, test);
-            strm.Position = 0;
-            TestClass deseri = (TestClass)formatter.Deserialize(strm);
-            Console.WriteLine(TestClass.num3);
-            //FileStream a = File.Exists(filePath) ? new FileStream(filePath, FileMode.CreateNew) : null; //this line was made for fun
-            */
 
-            DType constructTest = new DType(5, 8);
-            for (int i = 0; i < 50; i++)
-            {
+            //FileStream stream1 = new FileStream(target, FileMode.Create,FileAccess.ReadWrite);
+            //TgenFormatter.Serialize(stream1, test, FormatCompression.Json);
+            //stream1.Close();
 
-            var data = BinaryDeconstructor.Deconstruct(new TestClass(5,7,"yp")); //ERROR WHEN THERES A NULL AT THE END
-            Console.WriteLine(data);
-            Console.WriteLine(new BinaryBuilder(data).GetBytes().Length + " string format");
-            //Console.WriteLine(new ByteBuilder(data).ToString());
-            //Bitmap objDone = FromBytes(((byte[])BinaryConstructor.Construct(data)));
-            //Console.WriteLine(objDone.Height);
-            Console.WriteLine("Start");
-            //var objOLD = Constructor.Construct(dataOLD); //ERROR WHEN THERES A NULL AT THE END
-            Console.WriteLine("Done");
-            }
-            //Console.WriteLine(objOLD);
-            //Console.WriteLine(properties.Length);
-            //Console.WriteLine(fields.Length);
-            //Console.WriteLine(Deconstructor.Deconstruct(test));
-            //string myObj = Deconstructor.Deconstruct(new MySeriClass());
-            //Console.WriteLine(myObj);
-            //MySeriClass constructed = (MySeriClass)Constructor.Construct(myObj);
-            //Console.WriteLine();
-            //Console.WriteLine(constructed == null);
-            //Console.WriteLine(Deconstructor.Deconstruct(constructed));
-            //Type.GetType("yo", mymath, anothermath, true);
-            //Console.WriteLine(constructed.cType.a + " AND " + constructed.b);
+
+            FileStream stream2 = new FileStream(target, FileMode.Open, FileAccess.ReadWrite);
+            var a = (JsonElement)TgenFormatter.Deserialize(stream2, FormatCompression.Json);
+            Console.WriteLine(a["accountName"].Parse<string>());
+            a["accountName"] = "stop";
+            stream2.Close();
+            Console.ReadLine();
         }
 
         private static byte[] Bitmappo()
