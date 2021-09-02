@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.Serialization;
@@ -20,12 +21,9 @@ namespace TgenSerializer
         private const string startEnum = JsonGlobalOperations.startEnum; //start of array (enumer is sort of a collection like array and list, I like to call it array at time)
         private const string betweenEnum = JsonGlobalOperations.betweenEnum; //spaces between items/members in the array
         private const string endEnum = JsonGlobalOperations.endEnum; //end of array
-        private const string serializerEntry = JsonGlobalOperations.serializerEntry; //start of serializer object
-        private const string serializerExit = JsonGlobalOperations.serializerExit; //end of serializer object
-        private const string typeEntry = JsonGlobalOperations.typeEntry; //divides the name and type of an object
         private const string nullObj = JsonGlobalOperations.nullObj; //sign for a nullObj (deprecated)
 
-        private static BindingFlags bindingFlags = GlobalOperations.bindingFlags; //specifies to get both public and non public fields and properties
+        private static BindingFlags bindingFlags = JsonGlobalOperations.bindingFlags; //specifies to get both public and non public fields and properties
         #endregion
 
         public static string Deconstruct(object obj)
@@ -55,15 +53,11 @@ namespace TgenSerializer
             if (!obj.GetType().IsSerializable) //PROTECTION
                 return string.Empty; //don't touch the field, CONSIDER: throwing an error
 
-            //else if (obj is ISerializable)
-            //{
-            //    return SeriObjDeconstructor((ISerializable)obj);
-            //}
+            else if (obj is IJSONSerialize)
+                return ((IJSONSerialize)obj).GetData().Stringify();
 
             if (obj is IList) //string is also an enum but will never reach here thanks to the primitive check
-            {
                 return ListObjDeconstructor((IList)obj);
-            }
 
             #region SpecialCases
             /*Special cases so far:
@@ -86,15 +80,6 @@ namespace TgenSerializer
 
                 object fieldValue = field.GetValue(obj);
 
-                if (fieldValue == null) //No sending nulls
-                    continue; //Null object, ignore. spares the text in the writing
-
-                if (fieldValue.GetType() == typeof(object))
-                    continue; //Means the object is literally 'new object();' an empty object
-
-                if (fieldValue == obj)
-                    throw new StackOverflowException("An object points to itself"); //Will cause an infinite loop, so just throw it
-
                 if (Attribute.GetCustomAttribute(field, typeof(CompilerGeneratedAttribute)) == null) //this line checks for backing field
                     objGraph.Append(startVal + field.Name + endVal + equals + Deconstruction(fieldValue) + betweenEnum);
             }
@@ -107,28 +92,7 @@ namespace TgenSerializer
         /// deconstructs objects that inhert ISerializable
         /// </summary>
         /// <returns></returns>
-        private static string SeriObjDeconstructor(ISerializable obj)
-        {
-            SerializationInfo info = new SerializationInfo(obj.GetType(), new FormatterConverter());
-            StreamingContext context = new StreamingContext(StreamingContextStates.All);
-            obj.GetObjectData(info, context);
-            var node = info.GetEnumerator();
-            StringBuilder stringBuilder = new StringBuilder();
-            stringBuilder.Append(serializerEntry);
-
-            ///Object Type Change
-            stringBuilder.Append(info.ObjectType.AssemblyQualifiedName);
-            stringBuilder.Append(equals);
-            ///Object Type Change
-
-            while (node.MoveNext())
-            {
-                stringBuilder.Append(startClass + node.Name + typeEntry + node.ObjectType + equals + Deconstruction(node.Value) + endClass);
-                //stringBuilder.Append(startClass + node.Name + typeEntry + node.ObjectType + equals + Deconstruct(node.Value) + endClass);
-            }
-            stringBuilder.Append(serializerExit);
-            return stringBuilder.ToString();
-        }
+        private static string SeriObjDeconstructor(IJSONSerialize element) => element.GetData().Stringify();
 
         private static string ListObjDeconstructor(IList list)
         {

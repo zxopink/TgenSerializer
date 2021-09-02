@@ -6,22 +6,27 @@ using System.Runtime.Serialization;
 
 namespace TgenSerializer
 {
-    public class JsonElement
+    [Serializable]
+    public class JsonElement : IJSONSerialize
     {
         public readonly string Name;
         private object content;
+        public object Content { get => content; }
 
         /// <summary>
         /// A list(array)
         /// </summary>
+        [NonSerialized]
         public readonly bool IsList;
         /// <summary>
         /// A non primitive object
         /// </summary>
+        [NonSerialized]
         public readonly bool IsObject;
         /// <summary>
         /// A primitive value
         /// </summary>
+        [NonSerialized]
         public readonly bool IsValue;
 
         /// <summary>
@@ -109,7 +114,7 @@ namespace TgenSerializer
             Type contentType = obj?.GetType();
             IsList = contentType == typeof(List<object>);
             IsObject = contentType == typeof(List<JsonElement>);
-            IsValue = contentType == typeof(string) || contentType.IsValueType;
+            IsValue = contentType == null ? false : contentType == typeof(string) || contentType.IsValueType;
         }
 
         public override string ToString() => content.ToString();
@@ -153,11 +158,55 @@ namespace TgenSerializer
             return obj;
         }
 
+        public string Stringify()
+        {
+            string value = string.Empty;
+            if (IsValue)
+            {
+                if (Content is string)
+                    value += $"\"{ToString()}\"";
+                else
+                    value += $"{ToString()}";
+            }
+            if (IsObject)
+            {
+                value += "{";
+                List<JsonElement> list = (List<JsonElement>)Content;
+                for (int i = 0; i < list.Count; i++)
+                {
+                    value += $"\"{list[i].Name}\":";
+                    value += $"{list[i].Stringify()}";
+
+                    if (i != list.Count - 1)
+                        value += ",";
+                }
+                value += "}";
+            }
+
+            if (IsList)
+            {
+                value += "[";
+                for (int i = 0; i < Count; i++)
+                {
+                    value += $"{(this[i]).Stringify()}";
+
+                    if (i != Count - 1)
+                        value += ",";
+                }
+                value += "]";
+            }
+
+            if (Content == null)
+                value += "null";
+
+            return value;
+        }
+
         /// <summary>
         /// Prints out the elements
         /// </summary>
         /// <returns></returns>
-        public string Stringify()
+        public string Diagnose()
         {
             string value = $"{Name}: ";
             if (IsValue)
@@ -173,7 +222,7 @@ namespace TgenSerializer
                 List<JsonElement> list = (List<JsonElement>)content;
                 for (int i = 0; i < list.Count; i++)
                 {
-                    value += $"{list[i].Stringify()}";
+                    value += $"{list[i].Diagnose()}";
 
                     if(i != list.Count - 1)
                         value +=",\n\t";
@@ -186,7 +235,7 @@ namespace TgenSerializer
                 value += "[\n\t";
                 for (int i = 0; i < Count; i++)
                 {
-                    value += $"{this[i].Stringify()}";
+                    value += $"{this[i].Diagnose()}";
 
                     if (i != Count - 1)
                         value += ",\n\t";
@@ -194,9 +243,15 @@ namespace TgenSerializer
                 value += "\n\t]";
             }
 
+            if (content == null)
+                value += "null";
+
             return value;
         }
 
+        public JsonElement GetData() => this;
+
+        #region Value Cast Operators
         public static implicit operator sbyte(JsonElement obj) => obj.Parse<sbyte>();
         public static implicit operator byte(JsonElement obj) => obj.Parse<byte>();
         public static implicit operator short(JsonElement obj) => obj.Parse<short>();
@@ -222,6 +277,6 @@ namespace TgenSerializer
         public static implicit operator JsonElement(ushort obj) => new JsonElement(string.Empty, obj);
         public static implicit operator JsonElement(uint obj) => new JsonElement(string.Empty, obj);
         public static implicit operator JsonElement(ulong obj) => new JsonElement(string.Empty, obj);
-
+        #endregion
     }
 }

@@ -21,12 +21,9 @@ namespace TgenSerializer
         private const string startEnum = JsonGlobalOperations.startEnum; //start of array (enumer is sort of a collection like array and list, I like to call it array at time)
         private const string betweenEnum = JsonGlobalOperations.betweenEnum; //spaces between items/members in the array
         private const string endEnum = JsonGlobalOperations.endEnum; //end of array
-        private const string serializerEntry = JsonGlobalOperations.serializerEntry; //start of serializer object
-        private const string serializerExit = JsonGlobalOperations.serializerExit; //end of serializer object
-        private const string typeEntry = JsonGlobalOperations.typeEntry; //divides the name and type of an object
         private const string nullObj = JsonGlobalOperations.nullObj; //sign for a nullObj (deprecated)
 
-        private static BindingFlags bindingFlags = GlobalOperations.bindingFlags; //specifies to get both public and non public fields and properties
+        private static BindingFlags bindingFlags = JsonGlobalOperations.bindingFlags; //specifies to get both public and non public fields and properties
         #endregion
 
         public static JsonElement Construct(string objData)

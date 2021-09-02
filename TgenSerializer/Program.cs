@@ -72,7 +72,7 @@ namespace TgenSerializer
             list1.Add(new Btype(7));
             list1.Add(new Btype(9));
             num3++;
-            failure = new object();
+            //failure = new object();
             //listFromTheUnspeakableHell = new List<List<List<Btype>>>();
         }
     }
@@ -103,20 +103,29 @@ namespace TgenSerializer
     {
         static void Main(string[] args)
         {
+            Console.WriteLine(typeof(int).IsValueType);
+
             TestClass test = new TestClass(5, 2, "ay");
-            string target = "C:/Users/yoavh/OneDrive/Desktop/PonyDetails.txt";
+            string target = "C:/Users/Yoav/Desktop/PonyDetails.txt";
+            string digestionOutput = "C:/Users/Yoav/Desktop/resultOutput.txt";
 
 
-            //FileStream stream1 = new FileStream(target, FileMode.Create,FileAccess.ReadWrite);
-            //TgenFormatter.Serialize(stream1, test, FormatCompression.Json);
-            //stream1.Close();
+            FileStream stream1 = new FileStream(target, FileMode.Create,FileAccess.ReadWrite);
+            TgenFormatter.Serialize(stream1, test, FormatCompression.Json);
+            stream1.Close();
 
 
             FileStream stream2 = new FileStream(target, FileMode.Open, FileAccess.ReadWrite);
             var a = (JsonElement)TgenFormatter.Deserialize(stream2, FormatCompression.Json);
-            Console.WriteLine(a["accountName"].Parse<string>());
-            a["accountName"] = "stop";
+            Console.WriteLine(a["num1"].Parse<string>());
             stream2.Close();
+
+            FileStream stream3 = new FileStream(digestionOutput, FileMode.Create, FileAccess.ReadWrite);
+            TgenFormatter.Serialize(stream3, a, FormatCompression.Json);
+            stream3.Close();
+            Console.WriteLine(a.Stringify());
+            Console.WriteLine(a.Diagnose());
+
             Console.ReadLine();
         }
 

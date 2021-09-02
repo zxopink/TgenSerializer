@@ -52,6 +52,7 @@
     <Compile Include="BinaryConstructor.cs" />
     <Compile Include="BinaryDeconstructor.cs" />
     <Compile Include="BinaryBuilder.cs" />
+    <Compile Include="IJSONSerialize.cs" />
     <Compile Include="JsonDeconstructor.cs" />
     <Compile Include="JsonConstructor.cs" />
     <Compile Include="Constructor.cs" />
