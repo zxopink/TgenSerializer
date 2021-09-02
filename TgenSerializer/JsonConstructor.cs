@@ -64,9 +64,7 @@ namespace TgenSerializer
             }
 
             if (currentOperator == startEnum) //arrays/enumerators(sorta lists)/lists
-            {
                 return ListObjConstructor(ref objData, ref location);
-            }
 
             List<JsonElement> elements = new List<JsonElement>();
             while(currentOperator == startClass || currentOperator == betweenEnum)
