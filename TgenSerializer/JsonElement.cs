@@ -130,7 +130,7 @@ namespace TgenSerializer
 
             else if (IsList) //Runtime list casting, not ideal but works :)
             {
-                if (type.IsArray)
+                if (type.IsArray) //IsArray is only true for arrays, not lists
                 {
                     //Type = array of the type (string[]) and not string
                     //To get the type of the array we must use `type.GetElementType();`
