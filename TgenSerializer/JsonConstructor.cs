@@ -82,8 +82,6 @@ namespace TgenSerializer
             JumpOperator(ref objData, currentOperator, ref location);
             return elements;
 
-            throw new Exception("Json constructor failure, could not match operator");
-
             #region SpecialCases
             /*Special cases so far:
              * 1. Object is null (Done)

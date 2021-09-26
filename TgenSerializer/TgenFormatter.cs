@@ -1,33 +1,34 @@
 ﻿using System;
 using System.IO;
 using System.Runtime.Serialization;
-using static TgenSerializer.TgenFormatterSettings;
 
 namespace TgenSerializer
 {
-    public static class TgenFormatter
+    public class Formatter
     {
+        private FormatCompression compression;
+        public FormatCompression Compression { get => compression; set => compression = value; }
+
+        public Formatter(FormatCompression compression = FormatCompression.Json) =>
+            this.compression = compression;
+
         #region Serialization
-        public static void Serialize(Stream stream, object obj)
+        public void Serialize(Stream stream, object obj)
         {
-            BinaryWriter writer = new BinaryWriter(stream);
-            switch (Compression)
+            switch (compression)
             {
                 case FormatCompression.Binary:
-                    byte[] packet = BinaryDeconstructor.Deconstruct(obj);
-                    writer.Write(packet.Length);
-                    writer.Write(packet);
+                    BinarySerialize(stream, obj);
                     break;
                 case FormatCompression.Json:
-                    writer.Write(JsonDeconstructor.Deconstruct(obj));
+                    JsonSerialize(stream, obj);
                     break;
                 case FormatCompression.String:
-                    writer.Write(Deconstructor.Deconstruct(obj));
+                    StringSerialize(stream, obj);
                     break;
                 default:
                     throw new SerializationException("Please choose a format compression");
             }
-            writer.Flush();
         }
 
         public static void Serialize(Stream stream, object obj, FormatCompression compression)
@@ -48,7 +49,7 @@ namespace TgenSerializer
             }
         }
         #region Formats
-        private static void BinarySerialize(Stream stream, object obj)
+        public static void BinarySerialize(Stream stream, object obj)
         {
             BinaryWriter writer = new BinaryWriter(stream);
             byte[] packet = BinaryDeconstructor.Deconstruct(obj);
@@ -56,64 +57,41 @@ namespace TgenSerializer
             writer.Write(packet);
             writer.Flush();
         }
-        private static void JsonSerialize(Stream stream, object obj)
+        public static void JsonSerialize(Stream stream, object obj)
         {
             StreamWriter writer = new StreamWriter(stream);
             writer.Write(JsonDeconstructor.Deconstruct(obj));
             writer.Flush();
         }
-        private static void StringSerialize(Stream stream, object obj)
+        public static void StringSerialize(Stream stream, object obj)
         {
-            BinaryWriter writer = new BinaryWriter(stream);
+            //Used to be BinaryWriter, keep eye on that
+            StreamWriter writer = new StreamWriter(stream);
             writer.Write(Deconstructor.Deconstruct(obj));
             writer.Flush();
         }
         #endregion
-
-        public static string Serialize(object obj) => Deconstructor.Deconstruct(obj);
         #endregion
 
         #region Deserialization
-        #region Standard Deserialization
-        public static object Deserialize(Stream stream)
+        public object Deserialize(Stream stream)
         {
-            BinaryReader reader = new BinaryReader(stream);
-            switch (Compression)
+            switch (compression)
             {
                 case FormatCompression.Binary:
                     //int defaultTimeout = stream.ReadTimeout;
                     //stream.ReadTimeout = 10; //Like really, how long does the computer need to read a 4 byte signed integer? Change if needed
-                    byte[] packet = reader.ReadBytes(reader.ReadInt32());
-                    object obj = BinaryConstructor.Construct(packet);
-                    return obj;
+                    return BinaryDeserialize(stream);
+                case FormatCompression.Json:
+                    return JsonDeserialize(stream);
                 case FormatCompression.String:
-                    string objGraphData = reader.ReadString();
-                    return Constructor.Construct(objGraphData);
+                    return StringDeserialize(stream);
                 default:
                     throw new SerializationException("Please choose a format compression");
             }
         }
-        public static T Deserialize<T>(Stream stream)
-        {
-            BinaryReader reader = new BinaryReader(stream);
-            switch (Compression)
-            {
-                case FormatCompression.Binary:
-                    //int defaultTimeout = stream.ReadTimeout;
-                    //stream.ReadTimeout = 10; //Like really, how long does the computer need to read a 4 byte signed integer? Change if needed
-                    byte[] packet = reader.ReadBytes(reader.ReadInt32());
-                    T obj = (T)BinaryConstructor.Construct(packet);
-                    return obj;
-                case FormatCompression.String:
-                    string objGraphData = reader.ReadString();
-                    return (T)Constructor.Construct(objGraphData);
-                default:
-                    throw new SerializationException("Please choose a format compression");
-            }
-        }
-        #endregion
+        public T Deserialize<T>(Stream stream) => (T)Deserialize(stream);
 
-        #region Format Deserialization
         public static object Deserialize(Stream stream, FormatCompression compression)
         {
             switch (compression)
@@ -130,73 +108,37 @@ namespace TgenSerializer
                     throw new SerializationException("Please choose a format compression");
             }
         }
+        public static T Deserialize<T>(Stream stream, FormatCompression compression) => 
+            (T)Deserialize(stream, compression);
 
-        public static T Deserialize<T>(Stream stream, FormatCompression compression)
-        {
-            BinaryReader reader = new BinaryReader(stream);
-            switch (compression)
-            {
-                case FormatCompression.Binary:
-                    //int defaultTimeout = stream.ReadTimeout;
-                    //stream.ReadTimeout = 10; //Like really, how long does the computer need to read a 4 byte signed integer? Change if needed
-                    byte[] packet = reader.ReadBytes(reader.ReadInt32());
-                    T obj = (T)BinaryConstructor.Construct(packet);
-                    return obj;
-                case FormatCompression.String:
-                    string objGraphData = reader.ReadString();
-                    return (T)Constructor.Construct(objGraphData);
-                default:
-                    throw new SerializationException("Please choose a format compression");
-            }
-        }
-        #endregion
-
-        private static object BinaryDeserialize(Stream stream)
+        #region Formats
+        public static object BinaryDeserialize(Stream stream)
         {
             BinaryReader reader = new BinaryReader(stream);
             byte[] packet = reader.ReadBytes(reader.ReadInt32());
             return BinaryConstructor.Construct(packet);
         }
-        private static JsonElement JsonDeserialize(Stream stream)
+        public static JsonElement JsonDeserialize(Stream stream)
         {
             StreamReader reader = new StreamReader(stream);
             string content = reader.ReadToEnd();
             return JsonConstructor.Construct(content);
         }
-        private static object StringDeserialize(Stream stream)
+        public static object StringDeserialize(Stream stream)
         {
-            BinaryReader reader = new BinaryReader(stream);
-            string objGraphData = reader.ReadString();
+            //Used to be BinaryReader, keep eye on that
+            StreamReader reader = new StreamReader(stream);
+            string objGraphData = reader.ReadToEnd();
             return Constructor.Construct(objGraphData);
         }
-
-        #region String Deserialization 
-        public static object Deserialize(string objGraphData) => Constructor.Construct(objGraphData);
-        public static T Deserialize<T>(string objGraphData) => (T)Constructor.Construct(objGraphData);
-        #endregion
-
-        #region Binary Deserialization 
-        public static object Deserialize(byte[] objBinaryData) => BinaryConstructor.Construct(objBinaryData);
-        public static T Deserialize<T>(byte[] objBinaryData) => (T)BinaryConstructor.Construct(objBinaryData);
         #endregion
         #endregion
-
-        public static byte[] GetBinaryGraph(object obj) => BinaryDeconstructor.Deconstruct(obj);
-    }
-
-    public static class TgenFormatterSettings
-    {
-        private static FormatCompression compression = FormatCompression.Binary;
-        /// <summary>
-        /// Compression settings
-        /// </summary>
-        public static FormatCompression Compression { get { return compression; } set { compression = value; } }
     }
     public enum FormatCompression
     {
         /// <summary>
-        /// More compact but hard to read (similar to BinaryFormatter)
-        /// Ideal when using Network packets or for files that shouldn't be edited
+        /// Buffer, More compact but hard to read (similar to BinaryFormatter)
+        /// Ideal when using Network packets or for files that shouldn't be modified
         /// </summary>
         Binary,
 
@@ -206,7 +148,7 @@ namespace TgenSerializer
         Json,
 
         /// <summary>
-        /// Less compact yet easy to modify using either string or in a text file (similar to JSON)
+        /// Text, Less compact yet easy to modify using either string or in a text file (similar to JSON)
         /// Ideal when printing to a text file or when the packet needs to be modified before casted into a runtime object
         /// </summary>
         String

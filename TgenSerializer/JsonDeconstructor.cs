@@ -28,10 +28,7 @@ namespace TgenSerializer
 
         public static string Deconstruct(object obj)
         {
-            StringBuilder objGraph = new StringBuilder();
-            string result = Deconstruction(obj);
-            //Console.WriteLine("String Formatter Decompression: " + ByteBuilder.StrToBytes(result).Length);
-            return result;
+            return Deconstruction(obj);
             //must delcare the type at first so the constructor later on knows with what type it deals
             //the properties and fields can be aligned later on by using the first type, like a puzzle
             //the name of the object doesn't matter (therefore doesn't need to be saved) as well since the it will be changed anyways
