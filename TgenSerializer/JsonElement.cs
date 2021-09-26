@@ -122,25 +122,35 @@ namespace TgenSerializer
         public T Parse<T>() => (T)Parse(typeof(T));
         public object Parse(Type type)
         {
-            object result = null;
-
             if(IsValue) //For simple primitive values
-                result = Convert.ChangeType(content, type);
+                return Convert.ChangeType(content, type);
 
             else if(IsObject) //For non primitive values
-                result = ConstructType(type, this);
+                return ConstructType(type, this);
 
             else if (IsList) //Runtime list casting, not ideal but works :)
             {
+                if (type.IsArray)
+                {
+                    //Type = array of the type (string[]) and not string
+                    //To get the type of the array we must use `type.GetElementType();`
+                    Type arrayType = type.GetElementType();
+                    Array arr = Array.CreateInstance(arrayType, Count);
+                    for (int i = 0; i < arr.Length; i++)
+                        arr.SetValue(this[i].Parse(arrayType), i);
+                    return arr;
+                }
+                    
+
                 IList instance = (IList)Activator.CreateInstance(type);
                 Type typeOfInstance = type.GetGenericArguments()[0];
 
                 for (int i = 0; i < this.Count; i++)
                     instance.Add(ConstructType(typeOfInstance, this[i]));
 
-                result = instance;
+                return instance;
             }
-            return result; //Take care of custom types
+            return null; //Take care of custom types
         }
 
         private object ConstructType(Type objType, JsonElement content)
