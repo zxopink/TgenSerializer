@@ -1,17 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Drawing;
 using System.IO;
-using System.Linq;
 using System.Reflection;
-using System.Runtime.Remoting;
 using System.Runtime.Serialization;
-using System.Runtime.Serialization.Formatters.Binary;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Windows.Forms;
-using System.Xml.Serialization;
 
 namespace TgenSerializer
 {
@@ -129,6 +120,7 @@ namespace TgenSerializer
             Console.ReadLine();
         }
 
+        /*
         private static byte[] Bitmappo()
         {
             Rectangle bounds = Screen.GetBounds(Point.Empty);
@@ -142,6 +134,7 @@ namespace TgenSerializer
 
             return ToByteArray(bitmap, System.Drawing.Imaging.ImageFormat.Jpeg);
         }
+
         private static byte[] ToByteArray(Image image, System.Drawing.Imaging.ImageFormat format)
         {
             using (MemoryStream ms = new MemoryStream())
@@ -160,6 +153,8 @@ namespace TgenSerializer
             }
             return bmp;
         }
+                */
+
         /// <summary>
         /// Prints Console operations
         /// </summary>

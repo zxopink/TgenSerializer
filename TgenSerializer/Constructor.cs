@@ -52,11 +52,6 @@ namespace TgenSerializer
                 return GetValue(objType, ref objData, ref location);
             }
 
-            if (typeof(ISerializable).IsAssignableFrom(objType))
-            {
-                return SeriObjConstructor(objType, ref objData, ref location);
-            }
-
             if (typeof(IEnumerable).IsAssignableFrom(objType)) //arrays/enumerators(sorta lists)/lists
             {
                 if (objType.IsArray)
@@ -127,29 +122,6 @@ namespace TgenSerializer
             }
             location += endEnum.Length;
             location += endClass.Length;
-            return instance;
-        }
-
-        private static object SeriObjConstructor(Type objType, ref string dataInfo, ref int location)
-        {
-            SerializationInfo info = new SerializationInfo(objType, new FormatterConverter());
-            StreamingContext context = new StreamingContext(StreamingContextStates.All);
-            location += serializerEntry.Length;
-
-            ///Object Type Change
-            string possibleType = GetSection(ref dataInfo, equals, ref location);
-            objType = Type.GetType(possibleType, true);
-            ///Object Type Change
-
-            while (!CheckHitOperator(dataInfo, serializerExit, ref location))
-            {
-                KeyValuePair<string, Type> serializedObj = GetSerialiedName(ref dataInfo, ref location); //<name, type>
-                info.AddValue(serializedObj.Key, Construction(serializedObj.Value, ref dataInfo, ref location));
-            }
-            location += serializerExit.Length;
-            location += endClass.Length;
-
-            var instance = Activator.CreateInstance(objType, info, context); //constructor of a serializable object looks like: `public MyItemType(SerializationInfo info, StreamingContext context)`
             return instance;
         }
 

@@ -47,10 +47,6 @@ namespace TgenSerializer
 
             if (!obj.GetType().IsSerializable) //PROTECTION
                 return string.Empty; //don't touch the field, CONSIDER: throwing an error
-            else if (obj is ISerializable)
-            {
-                return SeriObjDeconstructor((ISerializable)obj);
-            }
 
             if (obj is IList) //string is also an enum but will never reach here thanks to the primitive check
             {
@@ -102,33 +98,6 @@ namespace TgenSerializer
             name.Remove(0, 1); //cuts the field's '<' at the start (NOT AN ENUM!)
             name.Remove(backingField.Length - 17, 16); //cuts the '>k__BackingField' at the end
             return name.ToString();
-        }
-
-        /// <summary>
-        /// deconstructs objects that inhert ISerializable
-        /// </summary>
-        /// <returns></returns>
-        private static string SeriObjDeconstructor(ISerializable obj)
-        {
-            SerializationInfo info = new SerializationInfo(obj.GetType(), new FormatterConverter());
-            StreamingContext context = new StreamingContext(StreamingContextStates.All);
-            obj.GetObjectData(info, context);
-            var node = info.GetEnumerator();
-            StringBuilder stringBuilder = new StringBuilder();
-            stringBuilder.Append(serializerEntry);
-
-            ///Object Type Change
-            stringBuilder.Append(info.ObjectType.AssemblyQualifiedName);
-            stringBuilder.Append(equals);
-            ///Object Type Change
-
-            while (node.MoveNext())
-            {
-                stringBuilder.Append(startClass + node.Name + typeEntry + node.ObjectType + equals + Deconstruction(node.Value) + endClass);
-                //stringBuilder.Append(startClass + node.Name + typeEntry + node.ObjectType + equals + Deconstruct(node.Value) + endClass);
-            }
-            stringBuilder.Append(serializerExit);
-            return stringBuilder.ToString();
         }
 
         private static string ListObjDeconstructor(IList list)
