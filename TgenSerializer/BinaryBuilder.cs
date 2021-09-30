@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Runtime.Serialization;
 using System.Text;
 
@@ -37,7 +36,8 @@ namespace TgenSerializer
             list.Add(arr);
         }
         public BinaryBuilder(BinaryBuilder builder) {
-            list = builder.list.ToList();
+            list = new List<byte[]>();
+            list.AddRange(builder.list);
         }
         public BinaryBuilder() { list = new List<byte[]>(); }
         #endregion
@@ -46,13 +46,6 @@ namespace TgenSerializer
         {
             list.AddRange(obj.list);
             return this;
-
-            BinaryBuilder hello = new BinaryBuilder("Hello ");
-            byte[] world = BinaryBuilder.StrToBytes("World");
-            byte[] helloWorld = hello + world;
-
-            BinaryBuilder result = helloWorld;
-            Console.WriteLine(result); //Hello world
         }
 
         private BinaryBuilder AddByteArr(byte[] arr) { list.Add(arr); return this; }
@@ -162,7 +155,10 @@ namespace TgenSerializer
             }
             else if (objType.Equals(typeof(string)))
             {
-                return BytesToStr(objData.Skip(startIndex).ToArray());
+                byte[] byteArr = new byte[objData.Length - startIndex];
+                for (int i = 0; i < byteArr.Length; i++)
+                    byteArr[i] = objData[startIndex + i];
+                return BytesToStr(byteArr);
             }
             else if (objType.Equals(typeof(bool)))
             {

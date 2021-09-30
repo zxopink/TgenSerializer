@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
 using System.Runtime.Serialization;
 
@@ -102,7 +101,10 @@ namespace TgenSerializer
             //ON THIN ICE
             if (objType.IsArray && objType.Equals(typeof(byte[])))
             {
-                byte[] byteArr = dataInfo.Skip(location).Take(length).ToArray();
+                byte[] byteArr = new byte[length];
+                for (int i = 0; i < length; i++)
+                    byteArr[i] = dataInfo[location + i];
+
                 location += byteArr.Length;
                 location += endEnum.Length;
                 location += endClass.Length;
