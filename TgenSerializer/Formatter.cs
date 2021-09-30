@@ -6,10 +6,10 @@ namespace TgenSerializer
 {
     public class Formatter
     {
-        private FormatCompression compression;
-        public FormatCompression Compression { get => compression; set => compression = value; }
+        private CompressionFormat compression;
+        public CompressionFormat Compression { get => compression; set => compression = value; }
 
-        public Formatter(FormatCompression compression = FormatCompression.Json) =>
+        public Formatter(CompressionFormat compression = CompressionFormat.Json) =>
             this.compression = compression;
 
         #region Serialization
@@ -17,13 +17,13 @@ namespace TgenSerializer
         {
             switch (compression)
             {
-                case FormatCompression.Binary:
+                case CompressionFormat.Binary:
                     BinarySerialize(stream, obj);
                     break;
-                case FormatCompression.Json:
+                case CompressionFormat.Json:
                     JsonSerialize(stream, obj);
                     break;
-                case FormatCompression.String:
+                case CompressionFormat.String:
                     StringSerialize(stream, obj);
                     break;
                 default:
@@ -31,17 +31,17 @@ namespace TgenSerializer
             }
         }
 
-        public static void Serialize(Stream stream, object obj, FormatCompression compression)
+        public static void Serialize(Stream stream, object obj, CompressionFormat compression)
         {
             switch (compression)
             {
-                case FormatCompression.Binary:
+                case CompressionFormat.Binary:
                     BinarySerialize(stream, obj);
                     break;
-                case FormatCompression.Json:
+                case CompressionFormat.Json:
                     JsonSerialize(stream, obj);
                     break;
-                case FormatCompression.String:
+                case CompressionFormat.String:
                     StringSerialize(stream, obj);
                     break;
                 default:
@@ -78,13 +78,13 @@ namespace TgenSerializer
         {
             switch (compression)
             {
-                case FormatCompression.Binary:
+                case CompressionFormat.Binary:
                     //int defaultTimeout = stream.ReadTimeout;
                     //stream.ReadTimeout = 10; //Like really, how long does the computer need to read a 4 byte signed integer? Change if needed
                     return BinaryDeserialize(stream);
-                case FormatCompression.Json:
+                case CompressionFormat.Json:
                     return JsonDeserialize(stream);
-                case FormatCompression.String:
+                case CompressionFormat.String:
                     return StringDeserialize(stream);
                 default:
                     throw new SerializationException("Please choose a format compression");
@@ -92,23 +92,23 @@ namespace TgenSerializer
         }
         public T Deserialize<T>(Stream stream) => (T)Deserialize(stream);
 
-        public static object Deserialize(Stream stream, FormatCompression compression)
+        public static object Deserialize(Stream stream, CompressionFormat compression)
         {
             switch (compression)
             {
-                case FormatCompression.Binary:
+                case CompressionFormat.Binary:
                     //int defaultTimeout = stream.ReadTimeout;
                     //stream.ReadTimeout = 10; //Like really, how long does the computer need to read a 4 byte signed integer? Change if needed
                     return BinaryDeserialize(stream);
-                case FormatCompression.Json:
+                case CompressionFormat.Json:
                     return JsonDeserialize(stream);
-                case FormatCompression.String:
+                case CompressionFormat.String:
                     return StringDeserialize(stream);
                 default:
                     throw new SerializationException("Please choose a format compression");
             }
         }
-        public static T Deserialize<T>(Stream stream, FormatCompression compression) => 
+        public static T Deserialize<T>(Stream stream, CompressionFormat compression) => 
             (T)Deserialize(stream, compression);
 
         #region Formats
@@ -134,7 +134,7 @@ namespace TgenSerializer
         #endregion
         #endregion
     }
-    public enum FormatCompression
+    public enum CompressionFormat
     {
         /// <summary>
         /// Buffer, More compact but hard to read (similar to BinaryFormatter)

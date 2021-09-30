@@ -102,17 +102,17 @@ namespace TgenSerializer
 
 
             FileStream stream1 = new FileStream(target, FileMode.Create,FileAccess.ReadWrite);
-            Formatter.Serialize(stream1, test, FormatCompression.Json);
+            Formatter.Serialize(stream1, test, CompressionFormat.Json);
             stream1.Close();
 
 
             FileStream stream2 = new FileStream(target, FileMode.Open, FileAccess.ReadWrite);
-            var a = (JsonElement)Formatter.Deserialize(stream2, FormatCompression.Json);
+            var a = (JsonElement)Formatter.Deserialize(stream2, CompressionFormat.Json);
             Console.WriteLine(a["num1"].Parse<string>());
             stream2.Close();
 
             FileStream stream3 = new FileStream(digestionOutput, FileMode.Create, FileAccess.ReadWrite);
-            Formatter.Serialize(stream3, a, FormatCompression.Json);
+            Formatter.Serialize(stream3, a, CompressionFormat.Json);
             stream3.Close();
             Console.WriteLine(a.Stringify());
             Console.WriteLine(a.Diagnose());
