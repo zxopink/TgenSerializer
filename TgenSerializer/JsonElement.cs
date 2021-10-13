@@ -54,7 +54,7 @@ namespace TgenSerializer
         private JsonElement GetElement(string key)
         {
             if (!IsObject)
-                throw new Exception("Element is not an object, can't accept element names");
+                throw new Exception($"{Name} is not an object, can't accept element names");
 
             List<JsonElement> elements = (List<JsonElement>)content;
             foreach (var element in elements)
@@ -69,7 +69,7 @@ namespace TgenSerializer
         private void SetElement(string key, JsonElement value)
         {
             if (!IsObject)
-                throw new Exception("Element is not an object, can't accept element names");
+                throw new Exception($"{Name} is not an object, can't accept element names");
 
             List<JsonElement> elements = (List<JsonElement>)content;
             for (int i = 0; i < elements.Count; i++)
@@ -83,7 +83,7 @@ namespace TgenSerializer
         private JsonElement GetIndex(int key)
         {
             if (!IsList)
-                throw new Exception("Element is not a list, can't accept integer index");
+                throw new Exception($"{Name} is not a list, can't accept integer index");
 
             List<object> elements = (List<object>)content;
             return new JsonElement(key.ToString(), elements[key]);
@@ -92,7 +92,7 @@ namespace TgenSerializer
         private void SetIndex(int key, JsonElement value)
         {
             if (!IsList)
-                throw new Exception("Element is not a list, can't accept integer index");
+                throw new Exception($"{Name} is not a list, can't accept integer index");
 
             List<object> elements = (List<object>)content;
             elements[key] = value.content;
@@ -101,7 +101,7 @@ namespace TgenSerializer
         public List<JsonElement> GetElements()
         { 
             if(!IsObject)
-                throw new Exception("Element is not an object, doesn't contain elements");
+                throw new Exception($"{Name} is not an object, doesn't contain elements");
 
             return (List<JsonElement>)content;
         }
@@ -140,13 +140,12 @@ namespace TgenSerializer
                         arr.SetValue(this[i].Parse(arrayType), i);
                     return arr;
                 }
-                    
 
                 IList instance = (IList)Activator.CreateInstance(type);
                 Type typeOfInstance = type.GetGenericArguments()[0];
 
                 for (int i = 0; i < this.Count; i++)
-                    instance.Add(ConstructType(typeOfInstance, this[i]));
+                    instance.Add(this[i].Parse(typeOfInstance));
 
                 return instance;
             }
