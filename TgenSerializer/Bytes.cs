@@ -11,7 +11,7 @@ namespace TgenSerializer
     /// So the program can append many byte arrays in a significant speed and while maintaining high preformance.
     /// Note: extreme use of this class should require basic understanding of memory management in object oriented languages.
     /// </summary>
-    public class BinaryBuilder
+    public class Bytes
     {
         List<byte[]> list;
 
@@ -23,33 +23,33 @@ namespace TgenSerializer
             } }
 
         #region Constructors
-        public BinaryBuilder(byte[] arr)
+        public Bytes(byte[] arr)
         {
             list = new List<byte[]>();
             list.Add(arr);
         }
-        public BinaryBuilder(byte b)
+        public Bytes(byte b)
         {
             list = new List<byte[]>();
             byte[] arr = new byte[1];
             arr[0] = b;
             list.Add(arr);
         }
-        public BinaryBuilder(BinaryBuilder builder) {
+        public Bytes(Bytes builder) {
             list = new List<byte[]>();
             list.AddRange(builder.list);
         }
-        public BinaryBuilder() { list = new List<byte[]>(); }
+        public Bytes() { list = new List<byte[]>(); }
         #endregion
 
-        public BinaryBuilder Append(BinaryBuilder obj)
+        public Bytes Append(Bytes obj)
         {
             list.AddRange(obj.list);
             return this;
         }
 
-        private BinaryBuilder AddByteArr(byte[] arr) { list.Add(arr); return this; }
-        private BinaryBuilder RemoveByteArr(byte[] arr) { list.Remove(arr); return this; }
+        private Bytes AddByteArr(byte[] arr) { list.Add(arr); return this; }
+        private Bytes RemoveByteArr(byte[] arr) { list.Remove(arr); return this; }
 
         public byte[] GetBytes()
         {
@@ -135,6 +135,11 @@ namespace TgenSerializer
                 throw new SerializationException("Primitive object of type " + obj.GetType() + " cannot be converted into bytes");
             }
         }
+        /// <summary>Converts a primitive (or string) object to an array of bytes</summary>
+        public static byte[] P2B(object obj) => PrimitiveToByte(obj);
+        /// <summary>Converts a primitive (or string) object to an array of bytes</summary>
+        public static byte[] P2B<T>(T obj) => PrimitiveToByte(obj);
+
         public static object ByteToPrimitive(Type objType, byte[] objData, int startIndex = 0)
         {
             if (objType.Equals(typeof(sbyte)))
@@ -193,16 +198,27 @@ namespace TgenSerializer
                 throw new SerializationException("Type " + objType + " cannot be converted into object from bytes");
             }
         }
+        public static object ByteToPrimitive<T>(byte[] objData, int startIndex = 0) => ByteToPrimitive(typeof(T), objData, startIndex);
 
-        public static byte[] StrToBytes(string str) => Encoding.UTF8.GetBytes(str); //THIS LINE USED TO BE ASCII, COULD BREAK EVERYTHING
+        /// <summary>Converts an array of bytes to a specified primitive (or string) object</summary>
+        public static object B2P(Type objType, byte[] objData) => ByteToPrimitive(objType, objData);
+        /// <summary>Converts an array of bytes to a specified primitive (or string) object</summary>
+        public static object B2P<T>(byte[] objData) => ByteToPrimitive<T>(objData);
+
+        public static byte[] StrToBytes(string str, Encoding encoder) => encoder.GetBytes(str); //THIS LINE USED TO BE ASCII, COULD BREAK EVERYTHING
+        /// <summary>A UTF8 encryption</summary>
+        public static byte[] StrToBytes(string str) => Encoding.UTF8.GetBytes(str);
+
+        public static string BytesToStr(byte[] b, Encoding encoder) => encoder.GetString(b);
+        /// <summary>A UTF8 encryption</summary>
         public static string BytesToStr(byte[] b) => Encoding.UTF8.GetString(b);
 
         //If b = byte[], the implicit operator will convert it to a BinaryBuilder
-        public static BinaryBuilder operator +(BinaryBuilder a, BinaryBuilder b) 
-        { return new BinaryBuilder(a).Append(b); }
+        public static Bytes operator +(Bytes a, Bytes b) 
+        { return new Bytes(a).Append(b); }
 
 
-        public static BinaryBuilder operator -(BinaryBuilder a, byte[] b)
+        public static Bytes operator -(Bytes a, byte[] b)
         { return a.RemoveByteArr(b); }
 
         //explicit keyword means it requires a cast syntax
@@ -210,22 +226,22 @@ namespace TgenSerializer
         //public static explicit operator ByteBuilder(byte b) => new ByteBuilder(b);
 
         //implicit keyword means it automatically converts the types (Implicit conversions don't require special syntax to be invoked)
-        public static implicit operator byte[](BinaryBuilder builder) => builder.GetBytes();
-        public static implicit operator BinaryBuilder(byte[] b) => new BinaryBuilder(b);
-        public static implicit operator string(BinaryBuilder builder) => BytesToStr(builder);
+        public static implicit operator byte[](Bytes builder) => builder.GetBytes();
+        public static implicit operator Bytes(byte[] b) => new Bytes(b);
+        public static implicit operator string(Bytes builder) => BytesToStr(builder);
 
-        public static implicit operator BinaryBuilder(sbyte obj) => new BinaryBuilder(PrimitiveToByte(obj));
-        public static implicit operator BinaryBuilder(byte obj) => new BinaryBuilder(PrimitiveToByte(obj));
-        public static implicit operator BinaryBuilder(short obj) => new BinaryBuilder(PrimitiveToByte(obj));
-        public static implicit operator BinaryBuilder(int obj) => new BinaryBuilder(PrimitiveToByte(obj));
-        public static implicit operator BinaryBuilder(double obj) => new BinaryBuilder(PrimitiveToByte(obj));
-        public static implicit operator BinaryBuilder(float obj) => new BinaryBuilder(PrimitiveToByte(obj));
-        public static implicit operator BinaryBuilder(bool obj) => new BinaryBuilder(PrimitiveToByte(obj));
-        public static implicit operator BinaryBuilder(string str) => new BinaryBuilder(StrToBytes(str));
-        public static implicit operator BinaryBuilder(long obj) => new BinaryBuilder(PrimitiveToByte(obj));
-        public static implicit operator BinaryBuilder(ushort obj) => new BinaryBuilder(PrimitiveToByte(obj));
-        public static implicit operator BinaryBuilder(uint obj) => new BinaryBuilder(PrimitiveToByte(obj));
-        public static implicit operator BinaryBuilder(ulong obj) => new BinaryBuilder(PrimitiveToByte(obj));
+        public static implicit operator Bytes(sbyte obj) => new Bytes(PrimitiveToByte(obj));
+        public static implicit operator Bytes(byte obj) => new Bytes(PrimitiveToByte(obj));
+        public static implicit operator Bytes(short obj) => new Bytes(PrimitiveToByte(obj));
+        public static implicit operator Bytes(int obj) => new Bytes(PrimitiveToByte(obj));
+        public static implicit operator Bytes(double obj) => new Bytes(PrimitiveToByte(obj));
+        public static implicit operator Bytes(float obj) => new Bytes(PrimitiveToByte(obj));
+        public static implicit operator Bytes(bool obj) => new Bytes(PrimitiveToByte(obj));
+        public static implicit operator Bytes(string str) => new Bytes(StrToBytes(str));
+        public static implicit operator Bytes(long obj) => new Bytes(PrimitiveToByte(obj));
+        public static implicit operator Bytes(ushort obj) => new Bytes(PrimitiveToByte(obj));
+        public static implicit operator Bytes(uint obj) => new Bytes(PrimitiveToByte(obj));
+        public static implicit operator Bytes(ulong obj) => new Bytes(PrimitiveToByte(obj));
 
         //Add implicit ByteToPrimitive operations
 
