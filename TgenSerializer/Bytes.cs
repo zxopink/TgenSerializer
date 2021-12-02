@@ -51,6 +51,7 @@ namespace TgenSerializer
         private Bytes AddByteArr(byte[] arr) { list.Add(arr); return this; }
         private Bytes RemoveByteArr(byte[] arr) { list.Remove(arr); return this; }
 
+        /// <summary>Converts the object to an array of bytes</summary>
         public byte[] GetBytes()
         {
             if (list.Count == 1)
@@ -73,6 +74,8 @@ namespace TgenSerializer
             return arr;
         }
 
+        /// <summary>Converts the bytes to T</summary>
+        /// <typeparam name="T">Type to cast to</typeparam>
         public T GetT<T>() => ByteToPrimitive<T>(this); //Implicit use of the function GetBytes()
 
         /// <summary>
