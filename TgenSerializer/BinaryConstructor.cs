@@ -11,17 +11,17 @@ namespace TgenSerializer
         //These fields are shared both by the constructor and constructor
         //NOTE: BetweenEnum and EndClass must have the same lenght since the serlizer treats them as the end of a class
         #region Global Fields
-        private static BinaryBuilder startClass = BinaryGlobalOperations.startClass; //sign for the start of a class
-        private static BinaryBuilder equals = BinaryGlobalOperations.equals; //sign for equals 
-        private static BinaryBuilder endClass = BinaryGlobalOperations.endClass; //sign for the end of a class
-        private static BinaryBuilder startEnum = BinaryGlobalOperations.startEnum; //start of array (enumer is sort of a collection like array and list, I like to call it array at time)
-        private static BinaryBuilder betweenEnum = BinaryGlobalOperations.betweenEnum; //spaces between items/members in the array
-        private static BinaryBuilder endEnum = BinaryGlobalOperations.endEnum; //end of array
-        private static BinaryBuilder serializerEntry = BinaryGlobalOperations.serializerEntry; //start of serializer object
-        private static BinaryBuilder serializerExit = BinaryGlobalOperations.serializerExit; //end of serializer object
-        private static BinaryBuilder typeEntry = BinaryGlobalOperations.typeEntry; //divides the name and type of an object]
+        private static Bytes startClass = BinaryGlobalOperations.startClass; //sign for the start of a class
+        private static Bytes equals = BinaryGlobalOperations.equals; //sign for equals 
+        private static Bytes endClass = BinaryGlobalOperations.endClass; //sign for the end of a class
+        private static Bytes startEnum = BinaryGlobalOperations.startEnum; //start of array (enumer is sort of a collection like array and list, I like to call it array at time)
+        private static Bytes betweenEnum = BinaryGlobalOperations.betweenEnum; //spaces between items/members in the array
+        private static Bytes endEnum = BinaryGlobalOperations.endEnum; //end of array
+        private static Bytes serializerEntry = BinaryGlobalOperations.serializerEntry; //start of serializer object
+        private static Bytes serializerExit = BinaryGlobalOperations.serializerExit; //end of serializer object
+        private static Bytes typeEntry = BinaryGlobalOperations.typeEntry; //divides the name and type of an object]
         [Obsolete]
-        private static BinaryBuilder nullObj = BinaryGlobalOperations.nullObj; //sign for a nullObj (deprecated)
+        private static Bytes nullObj = BinaryGlobalOperations.nullObj; //sign for a nullObj (deprecated)
 
         private const BindingFlags bindingFlags = GlobalOperations.bindingFlags; //specifies to get both public and non public fields and properties
         #endregion
@@ -90,9 +90,9 @@ namespace TgenSerializer
 
         private static object GetValue(Type objType, ref byte[] dataInfo, ref int location)
         {
-            BinaryBuilder valueStr = GetSection(ref dataInfo, endClass, ref location);
+            Bytes valueStr = GetSection(ref dataInfo, endClass, ref location);
             valueStr = valueStr == nullObj ? null : valueStr; //if the value is null, set it to null
-            return BinaryBuilder.ByteToPrimitive(objType, valueStr);
+            return Bytes.ByteToPrimitive(objType, valueStr);
         }
 
         private static object ArrObjConstructor(Type objType, ref byte[] dataInfo, ref int location)
@@ -193,9 +193,9 @@ namespace TgenSerializer
         /// <param name="dataInfo">The operation</param>
         /// <param name="syntax">Object graph</param>
         /// <returns>The required section</returns>
-        private static BinaryBuilder GetSection(ref byte[] dataInfo, byte[] syntax, ref int location)
+        private static Bytes GetSection(ref byte[] dataInfo, byte[] syntax, ref int location)
         {
-            BinaryBuilder sectionByte = new BinaryBuilder();
+            Bytes sectionByte = new Bytes();
             for (int i = location; i < dataInfo.Length; i++)
             {
                 if (CheckHitOperator(dataInfo, syntax, ref location)) //when the program gets to "=" it continues

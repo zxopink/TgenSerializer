@@ -43,7 +43,7 @@
   <ItemGroup>
     <Compile Include="BinaryConstructor.cs" />
     <Compile Include="BinaryDeconstructor.cs" />
-    <Compile Include="BinaryBuilder.cs" />
+    <Compile Include="Bytes.cs" />
     <Compile Include="IJSONSerialize.cs" />
     <Compile Include="JsonDeconstructor.cs" />
     <Compile Include="JsonConstructor.cs" />
