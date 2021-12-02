@@ -73,6 +73,8 @@ namespace TgenSerializer
             return arr;
         }
 
+        public T GetT<T>() => ByteToPrimitive<T>(this); //Implicit use of the function GetBytes()
+
         /// <summary>
         /// Turns a primitive object to byte[]
         /// (Taken from microsoft wiki) 
@@ -198,12 +200,12 @@ namespace TgenSerializer
                 throw new SerializationException("Type " + objType + " cannot be converted into object from bytes");
             }
         }
-        public static object ByteToPrimitive<T>(byte[] objData, int startIndex = 0) => ByteToPrimitive(typeof(T), objData, startIndex);
+        public static T ByteToPrimitive<T>(byte[] objData, int startIndex = 0) => (T)ByteToPrimitive(typeof(T), objData, startIndex);
 
         /// <summary>Converts an array of bytes to a specified primitive (or string) object</summary>
         public static object B2P(Type objType, byte[] objData) => ByteToPrimitive(objType, objData);
         /// <summary>Converts an array of bytes to a specified primitive (or string) object</summary>
-        public static object B2P<T>(byte[] objData) => ByteToPrimitive<T>(objData);
+        public static T B2P<T>(byte[] objData) => ByteToPrimitive<T>(objData);
 
         public static byte[] StrToBytes(string str, Encoding encoder) => encoder.GetBytes(str); //THIS LINE USED TO BE ASCII, COULD BREAK EVERYTHING
         /// <summary>A UTF8 encryption</summary>
