@@ -75,7 +75,10 @@ namespace TgenSerializer
         }
 
         /// <summary>Converts the bytes to T</summary>
-        /// <typeparam name="T">Type to cast to</typeparam>
+        /// <param name="returnType">Type to cast to (must be a primitve or string type)</param>
+        public object GetT(Type returnType) => ByteToPrimitive(returnType, this); //Implicit use of the function GetBytes()
+        /// <summary>Converts the bytes to T</summary>
+        /// <typeparam name="T">Type to cast to (must be a primitve or string type)</typeparam>
         public T GetT<T>() => ByteToPrimitive<T>(this); //Implicit use of the function GetBytes()
 
         /// <summary>
@@ -165,6 +168,9 @@ namespace TgenSerializer
             }
             else if (objType.Equals(typeof(string)))
             {
+                if(startIndex == 0) //Minor performance improvement
+                    return BytesToStr(objData);
+
                 byte[] byteArr = new byte[objData.Length - startIndex];
                 for (int i = 0; i < byteArr.Length; i++)
                     byteArr[i] = objData[startIndex + i];
@@ -210,13 +216,13 @@ namespace TgenSerializer
         /// <summary>Converts an array of bytes to a specified primitive (or string) object</summary>
         public static T B2P<T>(byte[] objData) => ByteToPrimitive<T>(objData);
 
-        public static byte[] StrToBytes(string str, Encoding encoder) => encoder.GetBytes(str); //THIS LINE USED TO BE ASCII, COULD BREAK EVERYTHING
         /// <summary>A UTF8 encryption</summary>
         public static byte[] StrToBytes(string str) => Encoding.UTF8.GetBytes(str);
+        public static byte[] StrToBytes(string str, Encoding encoder) => encoder.GetBytes(str); //THIS LINE USED TO BE ASCII, COULD BREAK EVERYTHING
 
-        public static string BytesToStr(byte[] b, Encoding encoder) => encoder.GetString(b);
         /// <summary>A UTF8 encryption</summary>
         public static string BytesToStr(byte[] b) => Encoding.UTF8.GetString(b);
+        public static string BytesToStr(byte[] b, Encoding encoder) => encoder.GetString(b);
 
         //If b = byte[], the implicit operator will convert it to a BinaryBuilder
         public static Bytes operator +(Bytes a, Bytes b) 
