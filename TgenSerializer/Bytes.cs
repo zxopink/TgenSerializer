@@ -15,6 +15,31 @@ namespace TgenSerializer
     {
         List<byte[]> list;
 
+        [Obsolete]
+        /// <summary>
+        /// Could be slow or not even work in practice
+        /// Test before publish
+        /// </summary>
+        /// <param name="index">Index of byte</param>
+        /// <returns></returns>
+        public int this[int index]
+        {
+            get
+            {
+                int counter = 0;
+                for (int i = 0; i < Length; i++)
+                {
+                    if (list[i].Length + counter < index)
+                        counter += list[i].Length;
+
+                    else
+                        return list[i][index - counter];
+                }
+                throw new StackOverflowException();
+            }
+            // get and set accessors
+        }
+
         public int Length { get {
                 int length = 0;
                 foreach (var arr in list)
@@ -77,9 +102,11 @@ namespace TgenSerializer
         /// <summary>Converts the bytes to T</summary>
         /// <param name="returnType">Type to cast to (must be a primitve or string type)</param>
         public object GetT(Type returnType) => ByteToPrimitive(returnType, this); //Implicit use of the function GetBytes()
+        public object GetT(Type returnType, int startIndex) => ByteToPrimitive(returnType, this, startIndex);
         /// <summary>Converts the bytes to T</summary>
         /// <typeparam name="T">Type to cast to (must be a primitve or string type)</typeparam>
         public T GetT<T>() => ByteToPrimitive<T>(this); //Implicit use of the function GetBytes()
+        public T GetT<T>(int startIndex) => ByteToPrimitive<T>(this, startIndex);
 
         /// <summary>
         /// Turns a primitive object to byte[]
@@ -209,6 +236,37 @@ namespace TgenSerializer
                 throw new SerializationException("Type " + objType + " cannot be converted into object from bytes");
             }
         }
+
+        /// <summary>
+        /// Converts the object to object graph of bytes
+        /// </summary>
+        /// <param name="obj">A non primitive serializable object</param>
+        /// <returns>Object graph</returns>
+        public static byte[] ClassToByte(object obj) =>
+            BinaryDeconstructor.Deconstruct(obj);
+
+        /// <summary>
+        /// Converts an object graph to marshall object
+        /// </summary>
+        /// <param name="obj">An object graph</param>
+        /// <returns>marshalled object</returns>
+        public static object ByteToClass(byte[] objGraph) =>
+            BinaryConstructor.Construct(objGraph);
+
+        /// <summary>
+        /// Converts bytes into a class
+        /// only works if bytes represents an object graph
+        /// </summary>
+        public object ToMarshall() =>
+            ByteToClass(this);
+
+        /// <summary>
+        /// Converts bytes into a marshall object
+        /// only works if bytes represents an object graph
+        /// </summary>
+        public T ToMarshall<T>() =>
+            (T)ByteToClass(this);
+
         public static T ByteToPrimitive<T>(byte[] objData, int startIndex = 0) => (T)ByteToPrimitive(typeof(T), objData, startIndex);
 
         /// <summary>Converts an array of bytes to a specified primitive (or string) object</summary>
