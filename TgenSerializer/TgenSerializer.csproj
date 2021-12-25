@@ -42,15 +42,19 @@
     <Reference Include="System" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="BinaryConstructor.cs" />
-    <Compile Include="BinaryDeconstructor.cs" />
-    <Compile Include="Bytes.cs" />
+    <Compile Include="Formatters\BinaryConstructor.cs" />
+    <Compile Include="Formatters\BinaryDeconstructor.cs" />
+    <Compile Include="Utils\Bytes.cs" />
+    <Compile Include="Utils\Bytes_Casting.cs" />
+    <Compile Include="Utils\Bytes_StaticMethods.cs" />
+    <Compile Include="Utils\DataReader.cs" />
+    <Compile Include="Utils\DataWriter.cs" />
     <Compile Include="Formatter.cs" />
     <Compile Include="IJSONSerialize.cs" />
-    <Compile Include="JsonDeconstructor.cs" />
-    <Compile Include="JsonConstructor.cs" />
-    <Compile Include="Constructor.cs" />
-    <Compile Include="Deconstructor.cs" />
+    <Compile Include="Formatters\JsonDeconstructor.cs" />
+    <Compile Include="Formatters\JsonConstructor.cs" />
+    <Compile Include="Formatters\StrConstructor.cs" />
+    <Compile Include="Formatters\StrDeconstructor.cs" />
     <Compile Include="GlobalOperations.cs" />
     <Compile Include="JsonElement.cs" />
     <Compile Include="Program.cs" />
