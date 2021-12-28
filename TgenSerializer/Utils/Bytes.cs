@@ -134,6 +134,12 @@ namespace TgenSerializer
                 list[i].CopyTo(arr, count);
                 count += list[i].Length;
             }
+
+
+            //RETHINK ABOUT THAT
+            //Meaning the object will always change it's byte[] storage each GetByte calls, might not be very optimal
+            list.Clear();
+            list.Add(arr);
             return arr;
         }
 
