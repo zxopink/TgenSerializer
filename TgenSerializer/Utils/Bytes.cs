@@ -88,7 +88,10 @@ namespace TgenSerializer
         public Bytes Append(Bytes obj)
         {
             list.AddRange(obj.list);
-            Length += obj.list.Count;
+            //obj.list.Count IS NOT obj.Length
+            //One is the amount of byte arrays and the other is the amount of bytes stored
+            //Length += obj.list.Count will break EVERYTHING
+            Length += obj.Length;
             return this;
         }
         public Bytes Append(byte[] obj)
@@ -160,12 +163,12 @@ namespace TgenSerializer
 
         //If b = byte[], the implicit operator will convert it to a BinaryBuilder
         public static Bytes operator +(Bytes a, Bytes b) 
-        { return a.Append(b); }
+        { return new Bytes(a).Append(b); }
         //Used to be 'new Bytes(a).Append(b);'
 
 
-        public static Bytes operator -(Bytes a, int amount)
-        { return a.RemoveEndBytes(amount); }
+        //public static Bytes operator -(Bytes a, int amount)
+        //{ return new Bytes(a).RemoveEndBytes(amount); }
 
     }
 }
