@@ -84,7 +84,6 @@ namespace TgenSerializer
 
         public static byte[] Deconstruct(object obj)
         {
-            Bytes builder = new Bytes();
             byte[] result = (startClass + obj.GetType().AssemblyQualifiedName + equals + Deconstruction(obj) + endClass);
             //Console.WriteLine("Binary Formatter Decompression: " + result.Length);
             return result;
