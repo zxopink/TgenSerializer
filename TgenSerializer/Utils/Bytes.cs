@@ -70,8 +70,7 @@ namespace TgenSerializer
         public Bytes(byte b) : this(new byte[] { b }) { }
         public Bytes(byte[] arr) : this()
         {
-            list.Add(arr);
-            Length += arr.Length;
+            Append(arr);
         }
         public Bytes(Bytes builder) : this() 
         {
