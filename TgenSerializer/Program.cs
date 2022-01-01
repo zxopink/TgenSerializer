@@ -8,7 +8,7 @@ namespace TgenSerializer
 {
 
     [Serializable]
-    public class MySeriClass : ISerializable
+    public class MySeriClass
     {
         //public int[] vs;
         public List<int> sake;

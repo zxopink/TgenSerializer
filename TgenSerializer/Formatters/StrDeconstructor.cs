@@ -45,6 +45,13 @@ namespace TgenSerializer
             if (obj.GetType().IsPrimitive || obj is string)
                 return obj.ToString();
 
+            if (obj is ISerializable)
+            {
+                var writer = new DataWriter();
+                ((ISerializable)obj).Serialize(writer);
+                return writer.data;
+            }
+
             if (!obj.GetType().IsSerializable) //PROTECTION
                 return string.Empty; //don't touch the field, CONSIDER: throwing an error
 

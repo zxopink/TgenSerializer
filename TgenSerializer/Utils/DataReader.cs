@@ -8,6 +8,7 @@ namespace TgenSerializer
     {
         byte[] Data { get; set; }
         int Index { get; set; }
+        int AvailableBytes => Data.Length - Index;
 
         public DataReader(byte[] data)
         {
@@ -27,13 +28,20 @@ namespace TgenSerializer
         public uint GetUInt32() { var value = Bytes.ToUInt32(Data, Index); Index += sizeof(uint); return value; }
         public ulong GetUInt64() { var value = Bytes.ToUInt64(Data, Index); Index += sizeof(ulong); return value; }
         public byte GetByte() { var value = Data[Index]; Index += sizeof(byte); return value; }
+        public byte[] GetRemainingBytes()
+        {
+            byte[] outgoingData = new byte[AvailableBytes];
+            Buffer.BlockCopy(Data, Index, outgoingData, 0, AvailableBytes);
+            Index = Data.Length;
+            return outgoingData;
+        }
         public byte[] GetBytes() 
         {
-            var size = Bytes.ToInt32(Data, Index);
+            var size = GetInt32();
             byte[] content = new byte[size];
             Array.Copy(Data, Index + sizeof(int), content, 0, size);
 
-            Index += sizeof(int) + size;
+            Index += size;
             return content;
         }
 

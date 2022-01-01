@@ -34,7 +34,7 @@ namespace TgenSerializer
             Type typeOfObj = Type.GetType(strType, true);
 
             if (!typeOfObj.IsSerializable) //PROTECTION
-                throw new SerializationException("The given object isn't serializable");
+                throw new SerializationException($"{typeOfObj} isn't a serializable type");
             object result = Construction(typeOfObj, ref objData, ref startingPoint); //starting point
             return result;
         }
@@ -51,6 +51,15 @@ namespace TgenSerializer
             if (objType.IsPrimitive || objType == typeof(string)) //Primitive values
             {
                 return GetValue(objType, ref objData, ref location);
+            }
+
+            if (typeof(ISerializable).IsAssignableFrom(objType))
+            {
+                Bytes valueStr = GetSection(ref objData, endClass, ref location);
+                var reader = new DataReader(valueStr);
+                var obj = ((ISerializable)Activator.CreateInstance(objType));
+                obj.Deserialize(reader);
+                return obj;
             }
 
             if (typeof(IEnumerable).IsAssignableFrom(objType)) //arrays/enumerators(sorta lists)/lists
@@ -70,7 +79,7 @@ namespace TgenSerializer
                 Type typeOfInstance = GetMemberType(fieldInfo);
 
                 if (!typeOfInstance.IsSerializable) //PROTECTION
-                    throw new SerializationException("The given object isn't serializable");
+                    throw new SerializationException($"{typeOfInstance} isn't a serializable type");
 
                 var obj = Construction(typeOfInstance, ref objData, ref location);
                 SetValue(fieldInfo, instance, obj); //set the new field instance to the obj
@@ -195,6 +204,7 @@ namespace TgenSerializer
         /// <returns>The required section</returns>
         private static Bytes GetSection(ref byte[] dataInfo, byte[] syntax, ref int location)
         {
+            //Please optimize this function
             Bytes sectionByte = new Bytes();
             for (int i = location; i < dataInfo.Length; i++)
             {

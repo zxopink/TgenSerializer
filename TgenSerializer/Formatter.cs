@@ -57,12 +57,17 @@ namespace TgenSerializer
             writer.Write(packet);
             writer.Flush();
         }
+        public static byte[] ToBytes(object obj) =>
+             BinaryDeconstructor.Deconstruct(obj);
+
         public static void JsonSerialize(Stream stream, object obj)
         {
             StreamWriter writer = new StreamWriter(stream);
             writer.Write(JsonDeconstructor.Deconstruct(obj));
             writer.Flush();
         }
+        public static string ToJSON(object obj) =>
+            JsonDeconstructor.Deconstruct(obj);
         public static void StringSerialize(Stream stream, object obj)
         {
             //Used to be BinaryWriter, keep eye on that
@@ -70,6 +75,8 @@ namespace TgenSerializer
             writer.Write(Deconstructor.Deconstruct(obj));
             writer.Flush();
         }
+        public static string ToString(object obj) =>
+            Deconstructor.Deconstruct(obj);
         #endregion
         #endregion
 
@@ -118,12 +125,18 @@ namespace TgenSerializer
             byte[] packet = reader.ReadBytes(reader.ReadInt32());
             return BinaryConstructor.Construct(packet);
         }
+        public static object FromBytes(byte[] data) =>
+            BinaryConstructor.Construct(data);
+
         public static JsonElement JsonDeserialize(Stream stream)
         {
             StreamReader reader = new StreamReader(stream);
             string content = reader.ReadToEnd();
             return JsonConstructor.Construct(content);
         }
+        public static JsonElement FromJSON(string data) =>
+            JsonConstructor.Construct(data);
+
         public static object StringDeserialize(Stream stream)
         {
             //Used to be BinaryReader, keep eye on that
@@ -131,6 +144,9 @@ namespace TgenSerializer
             string objGraphData = reader.ReadToEnd();
             return Constructor.Construct(objGraphData);
         }
+        public static object FromString(string data) =>
+            Constructor.Construct(data);
+
         #endregion
         #endregion
     }
