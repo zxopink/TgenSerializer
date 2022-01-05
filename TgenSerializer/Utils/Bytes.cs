@@ -16,55 +16,8 @@ namespace TgenSerializer
     {
         List<byte[]> list;
 
-        [Obsolete]
-        /// <summary>
-        /// Could be slow or not even work in practice
-        /// Test before publish
-        /// </summary>
-        /// <param name="index">Index of byte</param>
-        /// <returns></returns>
-        public int this[int index]
-        {
-            get
-            {
-                int counter = 0;
-                for (int i = 0; i < Length; i++)
-                {
-                    if (list[i].Length + counter < index)
-                        counter += list[i].Length;
-
-                    else
-                        return list[i][index - counter];
-                }
-                throw new StackOverflowException();
-            }
-            // get and set accessors
-        }
-
         /// <summary>Amount of bytes stored in object</summary>
         public int Length { get; private set; }
-        /*
-        public int Length { get {
-                int length = 0;
-                foreach (var arr in list)
-                    length += arr.Length;
-                return length;
-            } }
-        */
-
-        private int IndexToList(int index)
-        {
-            int count = 0, listIndex = 0;
-            byte[] arr = list[listIndex];
-            for (int i = 0; count < index; count++, i++)
-                if (arr.Length == i)
-                {
-                    i = 0;
-                    arr = list[++listIndex];
-                }
-
-            return listIndex;
-        }
 
         #region Constructors
         public Bytes(byte b) : this(new byte[] { b }) { }
@@ -95,8 +48,17 @@ namespace TgenSerializer
         }
         public Bytes Append(byte[] obj)
         {
-            list.Add(obj);
-            Length += obj.Length;
+            if (obj == null)
+                return this;
+
+                //Create new buffers
+                //Use of old ones could break when manually cleaned by a bufferpool or such
+                byte[] arr = new byte[obj.Length];
+                Buffer.BlockCopy(obj, 0, arr, 0, arr.Length);
+
+                list.Add(arr);
+                Length += arr.Length;
+
             return this;
         }
 
@@ -129,17 +91,19 @@ namespace TgenSerializer
         {
             byte[] arr = new byte[Length];
             int count = 0;
-            for (int i = 0; i < list.Count; i++)
+            lock (list) //Necessary lock! otherwise two threads can change it's content
             {
-                list[i].CopyTo(arr, count);
-                count += list[i].Length;
+                for (int i = 0; i < list.Count; i++)
+                {
+                    list[i].CopyTo(arr, count);
+                    count += list[i].Length;
+                }
+
+                //RETHINK ABOUT THAT
+                //Meaning the object will always change it's byte[] storage each GetByte calls, might not be very optimal
+                list.Clear();
+                list.Add(arr);
             }
-
-
-            //RETHINK ABOUT THAT
-            //Meaning the object will always change it's byte[] storage each GetByte calls, might not be very optimal
-            list.Clear();
-            list.Add(arr);
             return arr;
         }
 

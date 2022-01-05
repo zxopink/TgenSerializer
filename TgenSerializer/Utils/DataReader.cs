@@ -39,27 +39,31 @@ namespace TgenSerializer
         {
             var size = GetInt32();
             byte[] content = new byte[size];
-            Array.Copy(Data, Index + sizeof(int), content, 0, size);
+            Array.Copy(Data, Index, content, 0, size);
 
             Index += size;
             return content;
         }
 
+        [Obsolete]
         /// <returns>The type of the object or null if there isn't a type</returns>
         public Type TryGetType()
         {
             try
             {
+                //VERY BAD PRACTICE
+                //What if the first 4 bytes equal to 2 billion for int?
+                //Are you gonna dedicate the whole hard-drive?
                 var size = Bytes.ToInt32(Data, Index);
                 byte[] content = new byte[size];
-                Array.Copy(Data, Index + sizeof(int), content, 0, size);
+                Array.Copy(Data, Index + sizeof(int), content, 0, Data.Length);
                 string typeStr = Bytes.BytesToStr(content);
                 Type type = Type.GetType(typeStr, true);
 
                 Index += sizeof(int) + size;
                 return type;
             }
-            catch (Exception)
+            catch (Exception e)
             {
             }
             return null;
