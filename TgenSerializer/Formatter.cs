@@ -12,6 +12,8 @@ namespace TgenSerializer
         public Formatter(CompressionFormat compression = CompressionFormat.Json) =>
             this.compression = compression;
 
+        public int maxSize = int.MaxValue;
+
         #region Serialization
         public void Serialize(Stream stream, object obj)
         {
@@ -88,7 +90,7 @@ namespace TgenSerializer
                 case CompressionFormat.Binary:
                     //int defaultTimeout = stream.ReadTimeout;
                     //stream.ReadTimeout = 10; //Like really, how long does the computer need to read a 4 byte signed integer? Change if needed
-                    return BinaryDeserialize(stream);
+                    return BinaryDeserialize(stream, maxSize);
                 case CompressionFormat.Json:
                     return JsonDeserialize(stream);
                 case CompressionFormat.String:
@@ -99,14 +101,14 @@ namespace TgenSerializer
         }
         public T Deserialize<T>(Stream stream) => (T)Deserialize(stream);
 
-        public static object Deserialize(Stream stream, CompressionFormat compression)
+        public static object Deserialize(Stream stream, CompressionFormat compression, int maxSize = int.MaxValue)
         {
             switch (compression)
             {
                 case CompressionFormat.Binary:
                     //int defaultTimeout = stream.ReadTimeout;
                     //stream.ReadTimeout = 10; //Like really, how long does the computer need to read a 4 byte signed integer? Change if needed
-                    return BinaryDeserialize(stream);
+                    return BinaryDeserialize(stream, maxSize);
                 case CompressionFormat.Json:
                     return JsonDeserialize(stream);
                 case CompressionFormat.String:
@@ -119,12 +121,19 @@ namespace TgenSerializer
             (T)Deserialize(stream, compression);
 
         #region Formats
-        public static object BinaryDeserialize(Stream stream)
+        public static object BinaryDeserialize(Stream stream, int maxSize = int.MaxValue)
         {
             BinaryReader reader = new BinaryReader(stream);
-            byte[] packet = reader.ReadBytes(reader.ReadInt32());
+            int size = reader.ReadInt32();
+            if (size > maxSize)
+                throw new MarshalException(MarshalError.TooLarge, $"Stream info size ({size}) is bigger than max size ({maxSize})");
+            else if(size < 0)
+                throw new MarshalException(MarshalError.NegativeSize, $"Stream info size ({size}) is negative");
+            
+            byte[] packet = reader.ReadBytes(size);
             return BinaryConstructor.Construct(packet);
         }
+
         public static object FromBytes(byte[] data) =>
             BinaryConstructor.Construct(data);
 

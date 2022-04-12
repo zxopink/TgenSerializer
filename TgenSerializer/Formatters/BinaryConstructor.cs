@@ -34,7 +34,7 @@ namespace TgenSerializer
             Type typeOfObj = Type.GetType(strType, true);
 
             if (!typeOfObj.IsSerializable) //PROTECTION
-                throw new SerializationException($"{typeOfObj} isn't a serializable type");
+                throw new MarshalException(MarshalError.NonSerializable, $"{typeOfObj} isn't a serializable type");
             object result = Construction(typeOfObj, ref objData, ref startingPoint); //starting point
             return result;
         }
@@ -70,7 +70,7 @@ namespace TgenSerializer
             }
 
             object instance = FormatterServices.GetUninitializedObject(objType);
-            while (CheckHitOperator(objData, startClass, ref location))
+            while (CheckHitOperator(objData, startClass, location))
             {
                 MemberInfo fieldInfo = GetField(instance, ref objData, ref location); //detect the field inside obj
 
@@ -79,7 +79,7 @@ namespace TgenSerializer
                 Type typeOfInstance = GetMemberType(fieldInfo);
 
                 if (!typeOfInstance.IsSerializable) //PROTECTION
-                    throw new SerializationException($"{typeOfInstance} isn't a serializable type");
+                    throw new MarshalException(MarshalError.NonSerializable, $"{typeOfInstance} isn't a serializable type");
 
                 var obj = Construction(typeOfInstance, ref objData, ref location);
                 SetValue(fieldInfo, instance, obj); //set the new field instance to the obj
@@ -111,8 +111,10 @@ namespace TgenSerializer
             if (objType.IsArray && objType.Equals(typeof(byte[])))
             {
                 byte[] byteArr = new byte[length];
-                for (int i = 0; i < length; i++)
-                    byteArr[i] = dataInfo[location + i];
+
+                Buffer.BlockCopy(dataInfo, location, byteArr, 0, length);
+                //for (int i = 0; i < length; i++)
+                //    byteArr[i] = dataInfo[location + i];
 
                 location += byteArr.Length;
                 location += endEnum.Length;
@@ -122,7 +124,7 @@ namespace TgenSerializer
 
             var instance = (IList)Activator.CreateInstance(objType, new object[] { length });
             Type typeOfInstance = objType.GetElementType(); //Gets the type this array contrains, like the 'object' part of object[]
-            for (int i = 0; !CheckHitOperator(dataInfo, endEnum, ref location); i++)
+            for (int i = 0; !CheckHitOperator(dataInfo, endEnum, location); i++)
             {
                 object item = Construction(typeOfInstance, ref dataInfo, ref location);
                 instance[i] = item; //Can't use add!
@@ -137,7 +139,7 @@ namespace TgenSerializer
             IList instance = (IList)Activator.CreateInstance(objType);
             Type typeOfInstance = objType.GetGenericArguments()[0];
             location += startEnum.Length;
-            while (!CheckHitOperator(dataInfo, endEnum, ref location))
+            while (!CheckHitOperator(dataInfo, endEnum, location))
             {
                 object item = Construction(typeOfInstance, ref dataInfo, ref location);
                 instance.Add(item);
@@ -172,7 +174,7 @@ namespace TgenSerializer
         private static Type GetMemberType(MemberInfo objType)
         {
             if (objType is FieldInfo)
-                return ((FieldInfo)objType).IsNotSerialized ? throw new SerializationException("Member isn't serilizable") : ((FieldInfo)objType).FieldType;
+                return ((FieldInfo)objType).IsNotSerialized ? throw new MarshalException(MarshalError.NonSerializable, "Member isn't serilizable") : ((FieldInfo)objType).FieldType;
             else
                 return ((PropertyInfo)objType).PropertyType;
         }
@@ -204,17 +206,14 @@ namespace TgenSerializer
         /// <returns>The required section</returns>
         private static Bytes GetSection(ref byte[] dataInfo, byte[] syntax, ref int location)
         {
-            //Please optimize this function
-            Bytes sectionByte = new Bytes();
-            for (int i = location; i < dataInfo.Length; i++)
-            {
-                if (CheckHitOperator(dataInfo, syntax, ref location)) //when the program gets to "=" it continues
-                    break;
-                sectionByte.Append(dataInfo[i]);
-                location += 1;
-            }
+            int size;
+            for (size = 0; !CheckHitOperator(dataInfo, syntax, location); size++, location++) ;
+
+            byte[] section = new byte[size];
+            Buffer.BlockCopy(dataInfo, location - size, section, 0, size);
             location += syntax.Length;
-            return sectionByte;
+
+            return section;
         }
 
 
@@ -241,12 +240,19 @@ namespace TgenSerializer
         /// <param name="data"></param>
         /// <param name="strOperator"></param>
         /// <returns></returns>
-        private static bool CheckHitOperator(byte[] data, byte[] byteOperator, ref int location)
+        private static bool CheckHitOperator(byte[] data, byte[] byteOperator,int location)
         {
-            for (int i = 0; i < byteOperator.Length; i++)
-                if (data[location + i] != byteOperator[i])
-                    return false;
-            return true;
+            try
+            {
+                for (int i = 0; i < byteOperator.Length; i++)
+                    if (data[location + i] != byteOperator[i])
+                        return false;
+                return true;
+            }
+            catch (StackOverflowException)
+            {
+                throw new MarshalException(MarshalError.SyntaxError);
+            }
         }
     }
 }
