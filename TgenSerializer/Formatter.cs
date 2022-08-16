@@ -4,10 +4,14 @@ using System.Runtime.Serialization;
 
 namespace TgenSerializer
 {
-    public class Formatter
+    public class Formatter : IFormatter
     {
         private CompressionFormat compression;
         public CompressionFormat Compression { get => compression; set => compression = value; }
+
+        public SerializationBinder Binder { get => throw new NotSupportedException(); set => throw new NotSupportedException(); }
+        public StreamingContext Context { get => throw new NotSupportedException(); set => throw new NotSupportedException(); }
+        public ISurrogateSelector SurrogateSelector { get => throw new NotSupportedException(); set => throw new NotSupportedException(); }
 
         public Formatter(CompressionFormat compression = CompressionFormat.Json) =>
             this.compression = compression;
