@@ -62,6 +62,11 @@ namespace TgenSerializer
                 return obj;
             }
 
+            //if (objType.IsValueType) //obj is struct
+            //{
+            //    
+            //}
+
             if (typeof(IEnumerable).IsAssignableFrom(objType)) //arrays/enumerators(sorta lists)/lists
             {
                 if (objType.IsArray)
@@ -72,17 +77,21 @@ namespace TgenSerializer
             object instance = FormatterServices.GetUninitializedObject(objType);
             while (CheckHitOperator(objData, startClass, location))
             {
-                MemberInfo fieldInfo = GetField(instance, ref objData, ref location); //detect the field inside obj
-
+                FieldInfo fieldInfo = GetField(instance, ref objData, ref location); //detect the field inside obj
+                
                 //if the field isn't primitive, make a new instance of it
                 //NOTE: strings must be initialized
                 Type typeOfInstance = GetMemberType(fieldInfo);
+
+                if (fieldInfo.IsNotSerialized)
+                    continue;
 
                 if (!typeOfInstance.IsSerializable) //PROTECTION
                     throw new MarshalException(MarshalError.NonSerializable, $"{typeOfInstance} isn't a serializable type");
 
                 var obj = Construction(typeOfInstance, ref objData, ref location);
-                SetValue(fieldInfo, instance, obj); //set the new field instance to the obj
+                fieldInfo.SetValue(instance, obj); //Will always be a field, at some cases a backingField
+                //SetValue(fieldInfo, instance, obj); //set the new field instance to the obj
             }
             location += endClass.Length;
             return instance;
@@ -156,13 +165,16 @@ namespace TgenSerializer
         /// <param name="objType">the info of the field/propery</param>
         /// <param name="obj">The value of the assigned member info</param>
         /// <param name="instance">Mother object of the member info </param>
-        private static void SetValue(MemberInfo objType, object instance, object obj)
+        /*
+        private static void SetValue(FieldInfo objType, object instance, object obj)
         {
+
             if (objType is FieldInfo)
                 ((FieldInfo)objType).SetValue(instance, obj);
             else
                 ((PropertyInfo)objType).GetSetMethod()?.Invoke(instance, new object[1] { obj }); //SetValue could be used but better not to
         }
+        */
 
         /// <summary>
         /// checks if the given MemberInfo is a field or a property
@@ -186,16 +198,38 @@ namespace TgenSerializer
         /// <param name="obj">Class of the field</param>
         /// <param name="dataInfo">The list of strings</param>
         /// <returns>Field inside the obj type</returns>
-        private static MemberInfo GetField(object obj, ref byte[] dataInfo, ref int location)
+        private static FieldInfo GetField(object obj, ref byte[] dataInfo, ref int location)
         {
             location += startClass.Length;
             string fieldName = GetSection(ref dataInfo, equals, ref location);
-            return obj.GetType().GetMember(fieldName, bindingFlags)[0];
+            Type objType = obj.GetType();
+            return GetFieldInfosIncludingBaseClasses(objType, fieldName);
             //methods are also members
             //getMember returns array since one method could have multiple signatures
             //in our case we don't care since we look for a field/property which can only have one signature
         }
 
+        public static FieldInfo GetFieldInfosIncludingBaseClasses(Type type, string name)
+        {
+            // If this class doesn't have a base, don't waste any time
+            if (type.BaseType == typeof(object))
+                return GetField(type, name);
+            else
+            {   // Otherwise, collect all types up to the furthest base class
+                var currentType = type;
+                FieldInfo field = null;
+                while (field == null && currentType != typeof(object))
+                {
+                    field = GetField(currentType, name);
+                    currentType = currentType.BaseType;
+                }
+                return field;
+            }
+        }
+
+        //Get fields and backingFields
+        public static FieldInfo GetField(Type type, string name) =>
+            type.GetField(name, bindingFlags) ?? type.GetField($"<{name}>k__BackingField", bindingFlags);
 
         /// <summary>
         /// This method will get the dataInfo and rescue the required section

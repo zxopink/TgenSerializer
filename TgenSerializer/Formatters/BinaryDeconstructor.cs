@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.Serialization;
@@ -97,7 +99,9 @@ namespace TgenSerializer
             if (obj == null)
                 return nullObj;
 
-            if (obj.GetType().IsPrimitive || obj is string)
+            Type type = obj.GetType();
+
+            if (type.IsPrimitive || obj is string)
                 return Bytes.PrimitiveToByte(obj);
 
             if (obj is ISerializable)
@@ -107,7 +111,7 @@ namespace TgenSerializer
                 return writer.data;
             }
 
-            if (!obj.GetType().IsSerializable) //PROTECTION
+            if (!type.IsSerializable) //PROTECTION
                 return new byte[0]; //don't touch the field, CONSIDER: throwing an error
 
             if (obj is IList) //string is also an enum but will never reach here thanks to the primitive check
@@ -115,7 +119,7 @@ namespace TgenSerializer
                 return ListObjDeconstructor((IList)obj);
             }
 
-            var fields = obj.GetType().GetFields(bindingFlags);
+            var fields = GetFieldInfosIncludingBaseClasses(type, bindingFlags);//type.GetFields(bindingFlags);
             Bytes objGraph = new Bytes();
             #region SpecialCases
             /*Special cases so far:
@@ -140,8 +144,6 @@ namespace TgenSerializer
                 if (fieldValue == obj)
                     throw new StackOverflowException("An object points to itself"); //Will cause an infinite loop, so just throw it
 
-                
-
                 //BACKING FIELDS ARE IGNORED BECAUSE THE PROPERTIES LINE SAVES THEM INSTEAD
                 //one of the few compiler generated attributes is backing fields
                 //backing field is a proprty with a get and set only, which has a hidden field behind it
@@ -154,14 +156,55 @@ namespace TgenSerializer
             return objGraph;
         }
 
+        //TODO:
+        //If B inherits from A and they both have a private field with the same name
+        //The serializer might screw up during construction, make them different by calling them B.x and A.x
+        //Or 1.x and 2.x based on the hierarchy level
+        public static FieldInfo[] GetFieldInfosIncludingBaseClasses(Type type, BindingFlags bindingFlags)
+        {
+            FieldInfo[] fieldInfos = type.GetFields(bindingFlags);
+
+            // If this class doesn't have a base, don't waste any time
+            if (type.BaseType == typeof(object))
+            {
+                return fieldInfos;
+            }
+            else
+            {   // Otherwise, collect all types up to the furthest base class
+                var currentType = type;
+                var fieldComparer = new FieldInfoComparer();
+                var fieldInfoList = new HashSet<FieldInfo>(fieldInfos, fieldComparer);
+                while (currentType != typeof(object))
+                {
+                    fieldInfos = currentType.GetFields(bindingFlags);
+                    fieldInfoList.UnionWith(fieldInfos);
+                    currentType = currentType.BaseType;
+                }
+                return fieldInfoList.ToArray();
+            }
+        }
+        private class FieldInfoComparer : IEqualityComparer<FieldInfo>
+        {
+            public bool Equals(FieldInfo x, FieldInfo y)
+            {
+                return x.DeclaringType == y.DeclaringType && x.Name == y.Name;
+            }
+
+            public int GetHashCode(FieldInfo obj)
+            {
+                return obj.Name.GetHashCode() ^ obj.DeclaringType.GetHashCode();
+            }
+        }
+
         private static Bytes GetNameOfBackingField(string backingField)
         {
             //backing field follows by the pattern: "<'name'>k__BackingField"
-            StringBuilder name = new StringBuilder();
-            name.Append(backingField);
-            name.Remove(0, 1); //cuts the field's '<' at the start (NOT AN ENUM!)
-            name.Remove(backingField.Length - 17, 16); //cuts the '>k__BackingField' at the end
-            return name.ToString();
+            //cut the field's '<' at the start (NOT AN ENUM!)
+            //cut the '>k__BackingField' at the end
+
+            //Get the name's length
+            int count = backingField.IndexOf('>') - 1; //Minus the '<'
+            return backingField.Substring(1, count);
         }
 
         private static Bytes ListObjDeconstructor(IList list)
