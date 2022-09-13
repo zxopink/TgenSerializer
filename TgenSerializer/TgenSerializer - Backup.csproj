@@ -7,15 +7,7 @@
     <Authors>Yoav_Haik</Authors>
     <PackageIcon>icon.png</PackageIcon>
     <PackageReadmeFile>README.md</PackageReadmeFile>
-    <Copyright>MIT</Copyright>
-    <RepositoryUrl>https://github.com/zxopink/TgenSerializer</RepositoryUrl>
-    <PackageTags>Serializer; Deserializer ;Formatter</PackageTags>
-    <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <PackageRequireLicenseAcceptance>False</PackageRequireLicenseAcceptance>
-    <NeutralLanguage>en</NeutralLanguage>
-    <Description>A Formatter to Serializer and Deserialize runtime object into Bytes/Text/Json types.
-Also provides a handy util Bytes class</Description>
-    <Version>0.6.0</Version>
+    <Copyright>MDI</Copyright>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">

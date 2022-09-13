@@ -18,18 +18,18 @@ The returned object has all the properties of the serialized one.
 
 * Uninitialized object is an object that was created without a constructor call.
 
-## BinaryBuilder
-The binary builder is a tool class that works just like `StringBuilder` but for bytes.
-It's used to make the work with arrays of bytes much easier and simple. (Like pythons')
+## Bytes
+The `Bytes` class is a tool that works just like `StringBuilder` but for byte arrays.
+It's used to make the work with arrays of byte arrays easier and simpler. (Like pythons')
 
-With the BinaryBuilder you can use mathematical operations (`+` & `-`) to connect arrays of bytes or remove them.
+With the `Bytes` class you can use mathematical operations (`+` & `-`) to concat arrays of bytes or remove them.
 It also includes implicit cast operations to easily cast primitive objects into bytes.  
 Example:
 ```cs
-    BinaryBuilder hello = new BinaryBuilder("Hello ");
-    byte[] world = BinaryBuilder.StrToBytes("world");
+    Bytes hello = new Bytes("Hello ");
+    byte[] world = Bytes.StrToBytes("world");
     byte[] helloWorld = hello + world;
 
-    BinaryBuilder result = hello World;
-    Console.WriteLine(result); //Hello world
+    Bytes result = helloWorld;
+    Console.WriteLine(result); //'Hello world' casted back to string
 ```
