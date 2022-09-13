@@ -27,8 +27,8 @@ With the `Bytes` class you can use mathematical operations (`+` & `-`) to concat
 It also includes implicit cast operations to easily cast primitive objects into bytes.  
 Example:
 ```cs
-    Bytes hello = new Bytes("Hello ");
-    byte[] world = Bytes.StrToBytes("world");
+    Bytes hello = "Hello ";
+    byte[] world = (Bytes)"world";
     byte[] helloWorld = hello + world;
 
     Bytes result = helloWorld;
