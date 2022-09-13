@@ -35,5 +35,5 @@ Example:
     Console.WriteLine(result); //'Hello world' casted back to string
 ```
 
-[NuGet]: https://shields.io/nuget/v/TgenSerializer
+[NuGet]: https://img.shields.io/nuget/v/TgenSerializer?color=blue
 [NuGet-url]: https://www.nuget.org/packages/TgenSerializer
