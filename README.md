@@ -1,4 +1,4 @@
-# TgenSerializer <img src="https://github.com/zxopink/TgenSerializer/blob/master/icon.png" width="64" height="64" title="TgenIcon">
+# TgenSerializer
 [![NuGet Package][NuGet]][NuGet-url]
 
 TgenSerializer is a serializer for Dotnet.
