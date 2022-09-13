@@ -1,6 +1,7 @@
 # TgenSerializer
+[![NuGet Package][NuGet]][NuGet-url]
 
-TgenSerializer is a serializer for the .Net (.Net core) framework.
+TgenSerializer is a serializer for Dotnet.
 
 It makes an object graph of serializeable objects using a recursive method
 then prints out the result into a stream.
@@ -33,3 +34,6 @@ Example:
     Bytes result = helloWorld;
     Console.WriteLine(result); //'Hello world' casted back to string
 ```
+
+[NuGet]: https://shields.io/nuget/v/TgenSerializer
+[NuGet-url]: https://www.nuget.org/packages/TgenSerializer
