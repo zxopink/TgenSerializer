@@ -2,7 +2,6 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
-    <ApplicationIcon>icon.ico</ApplicationIcon>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <Authors>Yoav_Haik</Authors>
     <PackageIcon>icon.png</PackageIcon>
@@ -25,10 +24,6 @@ Also provides a handy util Bytes class</Description>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
     <CheckForOverflowUnderflow>False</CheckForOverflowUnderflow>
   </PropertyGroup>
-
-  <ItemGroup>
-    <Content Include="icon.ico" />
-  </ItemGroup>
 
   <ItemGroup>
     <None Include="..\icon.png">
