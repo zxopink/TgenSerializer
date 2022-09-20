@@ -32,6 +32,7 @@ namespace TgenSerializer
         }
         public Bytes()
         {
+            //Array.Empty<byte>(); //Free memory allocation, use this when switching to array only
             list = new List<byte[]>();
             Length = 0;
         }
