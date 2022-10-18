@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Runtime.CompilerServices;
 using System.Runtime.Serialization;
 using System.Text;
@@ -63,7 +64,7 @@ namespace TgenSerializer
             return this;
         }
 
-        public Bytes RemoveEndBytes(int amount) 
+        internal Bytes RemoveEndBytes(int amount) 
         {
             list.RemoveRange(Length - amount, amount);
             return this;

@@ -161,6 +161,24 @@ namespace TgenSerializer
         public static byte[] GetBytes(double value) => BitConverter.GetBytes(value);
         public static byte[] GetBytes(string value) => StrToBytes(value);
 
+        public static byte[] ToBytes(params object[] objects)
+        {
+            List<byte[]> list = new List<byte[]>();
+            int length = 0;
+            foreach (var item in objects)
+            {
+                byte[] arr = PrimitiveToByte(item);
+                length += arr.Length;
+                list.Add(arr);
+            }
+            byte[] finalArr = new byte[length];
+            int countArr = 0;
+            for (int i = 0; i < length; i += list[countArr].Length, countArr++)
+                Buffer.BlockCopy(list[countArr], 0, finalArr, i, list[countArr].Length);
+
+            return finalArr;
+        }
+
         public static bool ToBoolean(byte[] value, int startIndex) => BitConverter.ToBoolean(value, startIndex);
         public static char ToChar(byte[] value, int startIndex) => BitConverter.ToChar(value, startIndex);
         public static double ToDouble(byte[] value, int startIndex) => BitConverter.ToDouble(value, startIndex);
@@ -193,7 +211,7 @@ namespace TgenSerializer
 
         /// <summary>A UTF8 encryption</summary>
         public static byte[] StrToBytes(string str) => Encoding.UTF8.GetBytes(str);
-        public static byte[] StrToBytes(string str, Encoding encoder) => encoder.GetBytes(str); //THIS LINE USED TO BE ASCII, COULD BREAK EVERYTHING
+        public static byte[] StrToBytes(string str, Encoding encoder) => encoder.GetBytes(str);
 
         /// <summary>A UTF8 encryption</summary>
         public static string BytesToStr(byte[] b) => Encoding.UTF8.GetString(b);
