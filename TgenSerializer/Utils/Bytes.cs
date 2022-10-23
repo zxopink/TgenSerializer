@@ -64,12 +64,6 @@ namespace TgenSerializer
             return this;
         }
 
-        internal Bytes RemoveEndBytes(int amount) 
-        {
-            list.RemoveRange(Length - amount, amount);
-            return this;
-        }
-
         /*
         /// <summary>Converts the object to an array of bytes</summary>
         public byte[] GetBytes()
@@ -109,14 +103,34 @@ namespace TgenSerializer
             return arr;
         }
 
+        public ReadOnlyCollection<byte> GetBytesReadOnly()
+        {
+            byte[] arr = new byte[Length];
+            int count = 0;
+            lock (list) //Necessary lock! otherwise two threads can change it's content
+            {
+                for (int i = 0; i < list.Count; i++)
+                {
+                    list[i].CopyTo(arr, count);
+                    count += list[i].Length;
+                }
+
+                //RETHINK ABOUT THAT
+                //Meaning the object will always change it's byte[] storage each GetByte calls, might not be very optimal
+                list.Clear();
+                list.Add(arr);
+            }
+            return Array.AsReadOnly(arr);
+        }
+
         /// <summary>Converts the bytes to T</summary>
         /// <param name="returnType">Type to cast to (must be a primitve or string type)</param>
         public object GetT(Type returnType) => ByteToPrimitive(returnType, this); //Implicit use of the function GetBytes()
         public object GetT(Type returnType, int startIndex) => ByteToPrimitive(returnType, this, startIndex);
         /// <summary>Converts the bytes to T</summary>
         /// <typeparam name="T">Type to cast to (must be a primitve or string type)</typeparam>
-        public T GetT<T>() => ByteToPrimitive<T>(this); //Implicit use of the function GetBytes()
-        public T GetT<T>(int startIndex) => ByteToPrimitive<T>(this, startIndex);
+        public T GetT<T>() where T : unmanaged => ByteToPrimitive<T>(this); //Implicit use of the function GetBytes()
+        public T GetT<T>(int startIndex) where T : unmanaged => ByteToPrimitive<T>(this, startIndex);
 
         /// <summary>
         /// Converts bytes into a class

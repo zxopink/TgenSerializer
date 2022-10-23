@@ -28,7 +28,7 @@ namespace TgenSerializer
 
         public T GetT<T>()
         {
-            return Bytes.ByteToPrimitive<T>(objInfo, index);
+            return (T)Bytes.ByteToPrimitive(typeof(T), objInfo, index);
         }
     }
 }
