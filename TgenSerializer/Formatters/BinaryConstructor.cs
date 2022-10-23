@@ -48,10 +48,12 @@ namespace TgenSerializer
         /// <returns></returns>
         private static object Construction(Type objType, ref byte[] objData, ref int location)
         {
-            if (objType.IsPrimitive || objType == typeof(string)) //Primitive values
-            {
+            if (objType.IsPrimitive) //Primitive values
                 return GetValue(objType, ref objData, ref location);
-            }
+
+            if (objType == typeof(string))
+                return GetString(ref objData, ref location);
+
 
             if (typeof(ISerializable).IsAssignableFrom(objType))
             {
@@ -111,6 +113,17 @@ namespace TgenSerializer
             Bytes valueStr = GetSection(ref dataInfo, endClass, ref location);
             valueStr = valueStr == nullObj ? null : valueStr; //if the value is null, set it to null
             return Bytes.ByteToPrimitive(objType, valueStr);
+        }
+        private static string GetString(ref byte[] dataInfo, ref int location)
+        {
+            int size = Bytes.B2P<int>(dataInfo, location);
+            location += sizeof(int);
+            if (size < 0)
+                throw new SerializationException("string size can't be negative");
+
+            byte[] strData = new byte[size];
+            Buffer.BlockCopy(dataInfo, location, strData, 0, size);
+            return Bytes.BytesToStr(strData);
         }
 
         private static object ArrObjConstructor(Type objType, ref byte[] dataInfo, ref int location)

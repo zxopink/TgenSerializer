@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Drawing;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Runtime.Serialization;
 using System.Text;
 
@@ -9,6 +11,7 @@ namespace TgenSerializer
 {
     public partial class Bytes
     {
+        public static Bytes Empty => Array.Empty<byte>();
         /// <summary>Converts a primitive (or string) object to an array of bytes</summary>
         //public static byte[] P2B(object obj) => PrimitiveToByte(obj);
         /// <summary>Converts a primitive (or string) object to an array of bytes</summary>
@@ -130,6 +133,7 @@ namespace TgenSerializer
         //public static object B2P(Type objType, byte[] objData) => ByteToPrimitive(objType, objData);
         /// <summary>Converts an array of bytes to a specified primitive (or string) object</summary>
         public static T B2P<T>(byte[] objData) where T : unmanaged => ByteToPrimitive<T>(objData);
+        public static T B2P<T>(byte[] objData, int startIndex) where T : unmanaged => ByteToPrimitive<T>(objData, startIndex);
 
         public static object ByteToPrimitive(Type objType, byte[] objData, int startIndex = 0)
         {
@@ -266,20 +270,19 @@ namespace TgenSerializer
 
         public static byte[] ToBytes(params object[] objects)
         {
-            List<byte[]> list = new List<byte[]>();
-            int length = 0;
-            foreach (var item in objects)
+            byte[][] list = new byte[objects.Length][];
+            for (int i = 0; i < list.Length; i++)
             {
+                var item = objects[i];
+                if (item is byte[] byteArr)
+                {
+                    list[i] = byteArr;
+                    continue;
+                }
                 byte[] arr = PrimitiveToByte(item);
-                length += arr.Length;
-                list.Add(arr);
+                list[i] = arr;
             }
-            byte[] finalArr = new byte[length];
-            int countArr = 0;
-            for (int i = 0; i < length; i += list[countArr].Length, countArr++)
-                Buffer.BlockCopy(list[countArr], 0, finalArr, i, list[countArr].Length);
-
-            return finalArr;
+            return Concat(list);
         }
 
         public static byte[] Concat(params byte[][] bytes)
@@ -287,11 +290,9 @@ namespace TgenSerializer
             int size = bytes.Sum(arr => arr.Length);
             byte[] ret = new byte[size];
             int index = 0;
-            for (int i = 0; i < bytes.Length; i++)
-            {
+            for (int i = 0; i < bytes.Length; index += bytes[i].Length, i++)
                 Buffer.BlockCopy(bytes[i], 0, ret, index, bytes[i].Length);
-                index += bytes[i].Length;
-            }
+
             return ret;
         }
 
@@ -306,22 +307,6 @@ namespace TgenSerializer
         public static ushort ToUInt16(byte[] value, int startIndex) => BitConverter.ToUInt16(value, startIndex);
         public static uint ToUInt32(byte[] value, int startIndex) => BitConverter.ToUInt32(value, startIndex);
         public static ulong ToUInt64(byte[] value, int startIndex) => BitConverter.ToUInt64(value, startIndex);
-
-        /// <summary>
-        /// Converts the object to object graph of bytes
-        /// </summary>
-        /// <param name="obj">A non primitive serializable object</param>
-        /// <returns>Object graph</returns>
-        public static byte[] ClassToByte(object obj) =>
-            BinaryDeconstructor.Deconstruct(obj);
-
-        /// <summary>
-        /// Converts an object graph to marshall object
-        /// </summary>
-        /// <param name="obj">An object graph</param>
-        /// <returns>marshalled object</returns>
-        public static object ByteToClass(byte[] objGraph) =>
-            BinaryConstructor.Construct(objGraph);
 
         /// <summary>A UTF8 encryption</summary>
         public static byte[] StrToBytes(string str) => Encoding.UTF8.GetBytes(str);

@@ -1,6 +1,8 @@
 ﻿using BenchmarkDotNet;
 using BenchmarkDotNet.Running;
 using BenchMarkTests;
+using TgenSerializer;
 
-var summary = BenchmarkRunner.Run<Casting>();
-Console.WriteLine(summary);
+
+[Serializable]
+record AClass(string yep);

@@ -28,7 +28,7 @@ namespace TgenSerializer
         public static implicit operator Bytes(uint obj) => new Bytes(PrimitiveToByte(obj));
         public static implicit operator Bytes(ulong obj) => new Bytes(PrimitiveToByte(obj));
 
-        /// <summary>Converts string to an array of bytes</summary>
+        /// <summary>Converts the bytes to a UTF8 string</summary>
         public override string ToString() => 
             BytesToStr(this);
     }

@@ -124,36 +124,16 @@ namespace TgenSerializer
         }
 
         /// <summary>Converts the bytes to T</summary>
-        /// <param name="returnType">Type to cast to (must be a primitve or string type)</param>
+        /// <param name="returnType">must be a primitive</param>
         public object GetT(Type returnType) => ByteToPrimitive(returnType, this); //Implicit use of the function GetBytes()
-        public object GetT(Type returnType, int startIndex) => ByteToPrimitive(returnType, this, startIndex);
         /// <summary>Converts the bytes to T</summary>
-        /// <typeparam name="T">Type to cast to (must be a primitve or string type)</typeparam>
+        /// <typeparam name="T">must be a primitive or string type</typeparam>
         public T GetT<T>() where T : unmanaged => ByteToPrimitive<T>(this); //Implicit use of the function GetBytes()
-        public T GetT<T>(int startIndex) where T : unmanaged => ByteToPrimitive<T>(this, startIndex);
-
-        /// <summary>
-        /// Converts bytes into a class
-        /// only works if bytes represents an object graph
-        /// </summary>
-        public object ToMarshall() =>
-            ByteToClass(this);
-
-        /// <summary>
-        /// Converts bytes into a marshall object
-        /// only works if bytes represents an object graph
-        /// </summary>
-        public T ToMarshall<T>() =>
-            (T)ByteToClass(this);
 
         //If b = byte[], the implicit operator will convert it to a BinaryBuilder
         public static Bytes operator +(Bytes a, Bytes b) 
         { return new Bytes(a).Append(b); }
         //Used to be 'new Bytes(a).Append(b);'
-
-
-        //public static Bytes operator -(Bytes a, int amount)
-        //{ return new Bytes(a).RemoveEndBytes(amount); }
 
     }
 }

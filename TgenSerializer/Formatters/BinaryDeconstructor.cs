@@ -29,8 +29,6 @@ namespace TgenSerializer
         private const BindingFlags bindingFlags = GlobalOperations.bindingFlags; //specifies to get both public and non public fields and properties
         #endregion
 
-        private static Bytes StrToByte(string str) => Encoding.ASCII.GetBytes(str);
-
         #region PrimitiveToByte
         /// <summary>
         /// Turns a primitive object to byte[]
@@ -101,8 +99,11 @@ namespace TgenSerializer
 
             Type type = obj.GetType();
 
-            if (type.IsPrimitive || obj is string)
+            if (type.IsPrimitive)
                 return Bytes.PrimitiveToByte(obj);
+
+            if (obj is string str)
+                return Bytes.ToBytes(str.Length, Bytes.StrToBytes(str));
 
             if (obj is ISerializable)
             {
@@ -112,7 +113,7 @@ namespace TgenSerializer
             }
 
             if (!type.IsSerializable) //PROTECTION
-                return new byte[0]; //don't touch the field, CONSIDER: throwing an error
+                return Bytes.Empty; //don't touch the field, CONSIDER: throwing an error
 
             if (obj is IList) //string is also an enum but will never reach here thanks to the primitive check
             {
@@ -217,10 +218,10 @@ namespace TgenSerializer
                 //if (list is List<byte>)
                 //    return ((List<byte>)list).ToArray();
                 objGraph.Append(list.Count.ToString());
-                if (list is byte[])
+                if (list is byte[] byteArr)
                 {
                     objGraph.Append(startEnum);
-                    objGraph.Append((byte[])list);
+                    objGraph.Append(byteArr);
                     objGraph.Append(endEnum);
                     return objGraph;
                 }
