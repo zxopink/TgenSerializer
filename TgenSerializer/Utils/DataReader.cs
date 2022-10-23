@@ -63,7 +63,7 @@ namespace TgenSerializer
                 Index += sizeof(int) + size;
                 return type;
             }
-            catch (Exception e)
+            catch (Exception)
             {
             }
             return null;
