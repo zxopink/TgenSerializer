@@ -1,6 +1,7 @@
 ﻿using BenchmarkDotNet;
 using BenchmarkDotNet.Running;
 using BenchMarkTests;
+using System.Dynamic;
 using TgenSerializer;
 
 //var t = new TestClass(10, "Hello world", new object[] { 10, "yes", .5m });
