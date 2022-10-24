@@ -4,14 +4,14 @@ using System.Text;
 
 namespace TgenSerializer
 {
-    public partial class Bytes
+    public partial struct Bytes
     {
         //explicit keyword means it requires a cast syntax
         //public static explicit operator byte(ByteBuilder obj) => obj.GetBytes()[0];
         //public static explicit operator ByteBuilder(byte b) => new ByteBuilder(b);
 
         //implicit keyword means it automatically converts the types (Implicit conversions don't require special syntax to be invoked)
-        public static implicit operator byte[](Bytes builder) => builder.GetBytes();
+        public static implicit operator byte[](Bytes builder) => builder.Array;
         public static implicit operator string(Bytes builder) => BytesToStr(builder);
         public static implicit operator Bytes(byte[] b) => new Bytes(b);
 

@@ -1,12 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
 using System.Threading.Tasks;
 using BenchmarkDotNet;
 using BenchmarkDotNet.Attributes;
 using TgenSerializer;
+using Formatter = TgenSerializer.Formatter;
 
 namespace BenchMarkTests
 {
@@ -16,37 +18,34 @@ namespace BenchMarkTests
     public class Serialization
     {
         public TestClass TestClass { get; set; }
-        public Formatter Formatter { get; set; } = new(CompressionFormat.Binary);
-        public BinaryFormatter BinaryFormatter { get; set; } = new();
+        IFormatter Formatter { get; set; }
         public MemoryStream MemoryStream { get; set; }
-        [GlobalSetup]
-        public void Setup()
+        public Serialization()
         {
             TestClass = new(10, "Hello world", new object[] { 10, "yes", .5m });
+        }
+        [GlobalSetup(Targets = new[]
+        { nameof(TgenSerialize), nameof(TgenDeserialize) })]
+        public void TgenSetup()
+        {
+            Formatter = new Formatter(CompressionFormat.Binary);
+        }
+        [GlobalSetup(Targets = new[]
+        { nameof(BinarySerialize), nameof(BinaryDeserialize) })]
+        public void BinarySetup()
+        {
+            Formatter = new BinaryFormatter();
         }
 
         [IterationCleanup]
         public void IterationClean() =>
             MemoryStream.Dispose();
 
-        [IterationSetup(Targets = new[]
-            {nameof(TgenSerialize), nameof(BinarySerialize)})]
-        public void IterationSetupSerialize()
-        {
-            MemoryStream = new();
-        }
-        [IterationSetup(Target = nameof(TgenDeserialize))]
-        public void IterationSetupTgenDeserialize()
+        [IterationSetup]
+        public void IterationSetup()
         {
             MemoryStream = new();
             Formatter.Serialize(MemoryStream, TestClass);
-            MemoryStream.Position = 0;
-        }
-        [IterationSetup(Target = nameof(BinaryDeserialize))]
-        public void IterationSetupBinaryDeserialize()
-        {
-            MemoryStream = new();
-            BinaryFormatter.Serialize(MemoryStream, TestClass);
             MemoryStream.Position = 0;
         }
 
@@ -65,13 +64,13 @@ namespace BenchMarkTests
         [Benchmark]
         public void BinarySerialize()
         {
-            BinaryFormatter.Serialize(MemoryStream, TestClass);
+            Formatter.Serialize(MemoryStream, TestClass);
         }
 
         [Benchmark]
         public void BinaryDeserialize()
         {
-            BinaryFormatter.Deserialize(MemoryStream);
+            Formatter.Deserialize(MemoryStream);
         }
         //|            Method |      Mean |    Error |   StdDev |    Median | Allocated |
         //|------------------ |----------:|---------:|---------:|----------:|----------:|

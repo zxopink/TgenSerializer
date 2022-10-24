@@ -6,6 +6,7 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.Serialization;
 using System.Text;
+using TgenSerializer.Utils;
 
 namespace TgenSerializer
 {
@@ -84,9 +85,10 @@ namespace TgenSerializer
 
         public static byte[] Deconstruct(object obj)
         {
-            byte[] result = (startClass + obj.GetType().AssemblyQualifiedName + equals + Deconstruction(obj) + endClass);
-            //Console.WriteLine("Binary Formatter Decompression: " + result.Length);
-            return result;
+            ByteBuilder builder = new ByteBuilder();
+            var objBody = Deconstruction(obj);
+            builder.Append(startClass, obj.GetType().AssemblyQualifiedName, equals, objBody, endClass);
+            return builder.ToBytes();
             //must delcare the type at first so the constructor later on knows with what type it deals
             //the properties and fields can be aligned later on by using the first type, like a puzzle
             //the name of the object doesn't matter (therefore doesn't need to be saved) as well since the it will be changed anyways
@@ -109,7 +111,7 @@ namespace TgenSerializer
             {
                 var writer = new DataWriter();
                 ((ISerializable)obj).Serialize(writer);
-                return writer.data;
+                return writer.GetData();
             }
 
             if (!type.IsSerializable) //PROTECTION
@@ -121,7 +123,7 @@ namespace TgenSerializer
             }
 
             var fields = GetFieldInfosIncludingBaseClasses(type, bindingFlags);//type.GetFields(bindingFlags);
-            Bytes objGraph = new Bytes();
+            ByteBuilder objGraph = new ByteBuilder();
             #region SpecialCases
             /*Special cases so far:
              * 1. Object is null (Done)
@@ -150,11 +152,11 @@ namespace TgenSerializer
                 //backing field is a proprty with a get and set only, which has a hidden field behind it
                 //instead we save this field in the properties
                 if (Attribute.GetCustomAttribute(field, typeof(CompilerGeneratedAttribute)) == null) //this line checks for backing field
-                    objGraph.Append(startClass + field.Name + equals + Deconstruction(fieldValue) + endClass);
+                    objGraph.Append(startClass, field.Name, equals, Deconstruction(fieldValue), endClass);
                 else
-                    objGraph.Append(startClass + GetNameOfBackingField(field.Name) + equals + Deconstruction(fieldValue) + endClass);
+                    objGraph.Append(startClass, GetNameOfBackingField(field.Name), equals, Deconstruction(fieldValue), endClass);
             }
-            return objGraph;
+            return objGraph.ToBytes();
         }
 
         //TODO:
@@ -210,34 +212,28 @@ namespace TgenSerializer
 
         private static Bytes ListObjDeconstructor(IList list)
         {
-            Bytes objGraph = new Bytes(); //TODO: ADD A WAY TO COUNT MEMEBERS AND AVOID NULL sends
-            //THIS IS A BIG NONO (spent too much on to find these issue)
-            //IF ANOTHER UNSOLVALBE ISSUE RAISES LISTS ARE YOUR FIRST WARNING
+            ByteBuilder objGraph = new ByteBuilder();
             if (list.GetType().IsArray)
             {
                 //if (list is List<byte>)
                 //    return ((List<byte>)list).ToArray();
-                objGraph.Append(list.Count.ToString());
+                objGraph.Append(list.Count);
                 if (list is byte[] byteArr)
                 {
                     objGraph.Append(startEnum);
                     objGraph.Append(byteArr);
                     objGraph.Append(endEnum);
-                    return objGraph;
+                    return objGraph.ToBytes();
                 }
             }
             objGraph.Append(startEnum);
             foreach (var member in list)
             {
-                if (member == null) //Don't add to the list,
-                {
-                    //objGraph.Append(nullObj + betweenEnum); //No sending nulls
-                    continue;
-                }
+                if (member == null) continue;
                 objGraph.Append(Deconstruction(member) + endClass); //between Enum is like endclass
             }
             objGraph.Append(endEnum);
-            return objGraph;
+            return objGraph.ToBytes();
         }
     }
 }

@@ -111,32 +111,35 @@ namespace TgenSerializer
         private static object GetValue(Type objType, ref byte[] dataInfo, ref int location)
         {
             Bytes valueStr = GetSection(ref dataInfo, endClass, ref location);
-            valueStr = valueStr == nullObj ? null : valueStr; //if the value is null, set it to null
-            return Bytes.ByteToPrimitive(objType, valueStr);
+            return valueStr.IsEmptyOrNull() ? null : Bytes.ByteToPrimitive(objType, valueStr);
         }
         private static string GetString(ref byte[] dataInfo, ref int location)
         {
-            int size = Bytes.B2P<int>(dataInfo, location);
+            int length = Bytes.B2P<int>(dataInfo, location);
             location += sizeof(int);
-            if (size < 0)
-                throw new SerializationException("string size can't be negative");
 
-            byte[] strData = new byte[size];
-            Buffer.BlockCopy(dataInfo, location, strData, 0, size);
+            if (!CheckHitOperator(dataInfo, endClass, location + length))
+                throw new SerializationException("size for string is mismatched");
+            byte[] strData = new byte[length];
+            Buffer.BlockCopy(dataInfo, location, strData, 0, length);
+            location += length;
+            location += endClass.Length;
             return Bytes.BytesToStr(strData);
         }
 
         private static object ArrObjConstructor(Type objType, ref byte[] dataInfo, ref int location)
         {
-            int length = int.Parse(GetSection(ref dataInfo, startEnum, ref location)); //removes the start "<" and gets the array's length
-            //ON THIN ICE
+            //int length = int.Parse(GetSection(ref dataInfo, startEnum, ref location)); //removes the start "<" and gets the array's length
+            int length = Bytes.B2P<int>(dataInfo, location);
+            location += startEnum.Length;
+
             if (objType.IsArray && objType.Equals(typeof(byte[])))
             {
+                if (!CheckHitOperator(dataInfo, endClass, location + length))
+                    throw new SerializationException("size for array is mismatched");
                 byte[] byteArr = new byte[length];
 
                 Buffer.BlockCopy(dataInfo, location, byteArr, 0, length);
-                //for (int i = 0; i < length; i++)
-                //    byteArr[i] = dataInfo[location + i];
 
                 location += byteArr.Length;
                 location += endEnum.Length;
@@ -146,7 +149,7 @@ namespace TgenSerializer
 
             var instance = (IList)Activator.CreateInstance(objType, new object[] { length });
             Type typeOfInstance = objType.GetElementType(); //Gets the type this array contrains, like the 'object' part of object[]
-            for (int i = 0; !CheckHitOperator(dataInfo, endEnum, location); i++)
+            for (int i = 0; i < length; i++)
             {
                 object item = Construction(typeOfInstance, ref dataInfo, ref location);
                 instance[i] = item; //Can't use add!
@@ -170,24 +173,6 @@ namespace TgenSerializer
             location += endClass.Length;
             return instance;
         }
-
-        /// <summary>
-        /// This function was made to shorten my code, fieldinfo and property info both inherit from MemberInfo
-        /// but to set the said field/property you must cast it back to field or property (depends on it's original type)
-        /// </summary>
-        /// <param name="objType">the info of the field/propery</param>
-        /// <param name="obj">The value of the assigned member info</param>
-        /// <param name="instance">Mother object of the member info </param>
-        /*
-        private static void SetValue(FieldInfo objType, object instance, object obj)
-        {
-
-            if (objType is FieldInfo)
-                ((FieldInfo)objType).SetValue(instance, obj);
-            else
-                ((PropertyInfo)objType).GetSetMethod()?.Invoke(instance, new object[1] { obj }); //SetValue could be used but better not to
-        }
-        */
 
         /// <summary>
         /// checks if the given MemberInfo is a field or a property
@@ -261,24 +246,6 @@ namespace TgenSerializer
             location += syntax.Length;
 
             return section;
-        }
-
-
-        /// <summary>
-        /// Gets the data of the serialized object
-        /// and returns it's name and type
-        /// </summary>
-        /// <param name="dataInfo">Object data</param>
-        /// <returns>Name and type of the serialized object</returns>
-        private static KeyValuePair<string, Type> GetSerialiedName(ref byte[] dataInfo, ref int location)
-        {
-            location += startClass.Length;
-            string objName = GetSection(ref dataInfo, typeEntry, ref location);
-            string objType = GetSection(ref dataInfo, equals, ref location);
-            return new KeyValuePair<string, Type>(objName, Type.GetType(objType));
-            //methods are also members
-            //getMember returns array since one method could have multiple signatures
-            //in our case we don't care since we look for a field/property which can only have one signature
         }
 
         /// <summary>

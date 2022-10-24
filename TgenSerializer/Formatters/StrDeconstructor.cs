@@ -49,7 +49,7 @@ namespace TgenSerializer
             {
                 var writer = new DataWriter();
                 ((ISerializable)obj).Serialize(writer);
-                return writer.data;
+                return writer.data.ToString();
             }
 
             if (!obj.GetType().IsSerializable) //PROTECTION

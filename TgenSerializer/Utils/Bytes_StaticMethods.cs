@@ -9,9 +9,9 @@ using System.Text;
 
 namespace TgenSerializer
 {
-    public partial class Bytes
+    public partial struct Bytes
     {
-        public static Bytes Empty => Array.Empty<byte>();
+        public static Bytes Empty => System.Array.Empty<byte>();
         /// <summary>Converts a primitive (or string) object to an array of bytes</summary>
         //public static byte[] P2B(object obj) => PrimitiveToByte(obj);
         /// <summary>Converts a primitive (or string) object to an array of bytes</summary>
@@ -21,7 +21,7 @@ namespace TgenSerializer
             if (obj is sbyte valSbyte)
             {
                 string byteString = valSbyte.ToString("X2");
-                return new byte[1] { Byte.Parse(byteString, System.Globalization.NumberStyles.HexNumber) };
+                return new byte[1] { byte.Parse(byteString, System.Globalization.NumberStyles.HexNumber) };
             }
             else if (obj is byte valByte)
             {
@@ -292,6 +292,20 @@ namespace TgenSerializer
             int index = 0;
             for (int i = 0; i < bytes.Length; index += bytes[i].Length, i++)
                 Buffer.BlockCopy(bytes[i], 0, ret, index, bytes[i].Length);
+
+            return ret;
+        }
+
+        public static byte[] Concat(IEnumerable<byte[]> bytes)
+        {
+            int size = bytes.Sum(arr => arr.Length);
+            byte[] ret = new byte[size];
+            int index = 0;
+            foreach (var byteGroup in bytes)
+            {
+                Buffer.BlockCopy(byteGroup, 0, ret, index, byteGroup.Length);
+                index += byteGroup.Length;
+            }
 
             return ret;
         }
