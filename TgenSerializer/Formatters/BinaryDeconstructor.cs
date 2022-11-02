@@ -152,8 +152,8 @@ namespace TgenSerializer
                     return;
                 }
 
-                var fields = GetFieldInfosIncludingBaseClasses(type, bindingFlags);//type.GetFields(bindingFlags);
-                foreach (var field in fields)
+                FieldInfo[] fields = GetFieldsIncludingBaseClasses(type, bindingFlags);//type.GetFields(bindingFlags);
+                foreach (FieldInfo field in fields)
                 {
                     if (field.IsNotSerialized)
                         continue; //Don't touch the object, was meant to not be serialized
@@ -190,7 +190,7 @@ namespace TgenSerializer
             //If B inherits from A and they both have a private field with the same name
             //The serializer might screw up during construction, make them different by calling them B.x and A.x
             //Or 1.x and 2.x based on the hierarchy level
-            public static FieldInfo[] GetFieldInfosIncludingBaseClasses(Type type, BindingFlags bindingFlags)
+            public static FieldInfo[] GetFieldsIncludingBaseClasses(Type type, BindingFlags bindingFlags)
             {
                 FieldInfo[] fieldInfos = type.GetFields(bindingFlags);
 

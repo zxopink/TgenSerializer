@@ -1,10 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Runtime.Serialization;
 using System.Text;
 
 namespace TgenSerializer
 {
-    public class MarshalException : SystemException
+    public class MarshalException : SerializationException
     {
         public MarshalError Error { private set; get; }
         private string description;
