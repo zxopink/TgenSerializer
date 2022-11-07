@@ -58,10 +58,20 @@ namespace TgenSerializer
         public static void BinarySerialize(Stream stream, object obj)
         {
             BinaryWriter writer = new BinaryWriter(stream);
-            byte[] packet = BinaryDeconstructor.Deconstruct(obj);
-            writer.Write(packet.Length);
-            writer.Write(packet);
-            writer.Flush();
+            try
+            {
+                byte[] packet = BinaryDeconstructor.Deconstruct(obj);
+                writer.Write(packet.Length);
+                writer.Write(packet);
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+            finally
+            {
+                writer.Flush();
+            }
         }
         public static byte[] ToBytes(object obj) =>
              BinaryDeconstructor.Deconstruct(obj);
@@ -69,8 +79,18 @@ namespace TgenSerializer
         public static void JsonSerialize(Stream stream, object obj)
         {
             StreamWriter writer = new StreamWriter(stream);
-            writer.Write(JsonDeconstructor.Deconstruct(obj));
-            writer.Flush();
+            try
+            {
+                writer.Write(JsonDeconstructor.Deconstruct(obj));
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+            finally
+            {
+                writer.Flush();
+            }
         }
         public static string ToJSON(object obj) =>
             JsonDeconstructor.Deconstruct(obj);
@@ -78,8 +98,18 @@ namespace TgenSerializer
         {
             //Used to be BinaryWriter, keep eye on that
             StreamWriter writer = new StreamWriter(stream);
-            writer.Write(Deconstructor.Deconstruct(obj));
-            writer.Flush();
+            try
+            {
+                writer.Write(Deconstructor.Deconstruct(obj));
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+            finally
+            {
+                writer.Flush();
+            }
         }
         public static string ToString(object obj) =>
             Deconstructor.Deconstruct(obj);
