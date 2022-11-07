@@ -142,8 +142,7 @@ namespace TgenSerializer
 
                 else if (!type.IsSerializable) //PROTECTION
                 {
-                    Graph.Append(Bytes.Empty); //don't touch the field, CONSIDER: throwing an error
-                    return;
+                    throw new SerializationException($"{type} is missing a {nameof(SerializableAttribute)}");
                 }
 
                 else if (obj is IList) //string is also an enum but will never reach here thanks to the primitive check
