@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Data;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Runtime.Serialization;
 
 namespace TgenSerializer
@@ -115,8 +116,12 @@ namespace TgenSerializer
 
             private object GetValue(Type objType)
             {
-                Bytes valueStr = GetSection(endClass);
-                return valueStr.IsEmptyOrNull() ? null : Bytes.ByteToPrimitive(objType, valueStr);
+                //Only applied on primitive types
+                int size = Marshal.SizeOf(objType);
+                object value = Bytes.ByteToPrimitive(objType, Graph, Location);
+                Location += size;
+                Location += endClass.Length;
+                return value;
             }
             private string GetString()
             {
