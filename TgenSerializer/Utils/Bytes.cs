@@ -70,6 +70,17 @@ namespace TgenSerializer
             return (T)boxed;
         }
 
+        public byte[] SubBytes(int start) =>
+            SubBytes(start, Length);
+
+        public byte[] SubBytes(int start, int end)
+        {
+            int size = end - start;
+            byte[] sub = new byte[size];
+            Buffer.BlockCopy(Array, start, sub, 0, size);
+            return sub;
+        }
+
         /// <summary>
         /// Gets a ValueTuple type with primitive items and converts the Bytes to the given type.
         /// </summary>
