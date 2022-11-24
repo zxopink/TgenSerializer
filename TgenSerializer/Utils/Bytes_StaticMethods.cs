@@ -11,7 +11,7 @@ namespace TgenSerializer
 {
     public partial struct Bytes
     {
-        public static Bytes Empty => System.Array.Empty<byte>();
+        public static Bytes Empty => Array.Empty<byte>();
         /// <summary>Converts a primitive (or string) object to an array of bytes</summary>
         //public static byte[] P2B(object obj) => PrimitiveToByte(obj);
         /// <summary>Converts a primitive (or string) object to an array of bytes</summary>
@@ -66,6 +66,14 @@ namespace TgenSerializer
             else if (obj is ulong valUint64)
             {
                 return BitConverter.GetBytes(valUint64);
+            }
+            else if (obj is decimal deci)
+            {
+                //TODO
+                int[] ints = Decimal.GetBits(deci); //Decimal is 16 bytes, 4 ints
+                byte[] buf = new byte[ints.Length * sizeof(int)];
+                System.Buffer.BlockCopy(ints, 0, buf, 0, buf.Length);
+                return buf;
             }
             else
             {
@@ -122,6 +130,14 @@ namespace TgenSerializer
             else if (obj is ulong valUint64)
             {
                 return BitConverter.GetBytes(valUint64);
+            }
+            else if (obj is decimal deci)
+            {
+                //TODO
+                int[] ints = Decimal.GetBits(deci); //Decimal is 16 bytes, 4 ints
+                byte[] buf = new byte[ints.Length * sizeof(int)];
+                System.Buffer.BlockCopy(ints, 0, buf, 0, buf.Length);
+                return buf;
             }
             else
             {
@@ -181,9 +197,14 @@ namespace TgenSerializer
             {
                 return BitConverter.ToUInt64(objData, startIndex);
             }
+            else if (objType.Equals(typeof(decimal)))
+            {
+                //TODO
+                throw new NotSupportedException("Does not support decimal numbers yet");
+            }
             else
             {
-                throw new SerializationException("Type " + objData.GetType() + " cannot be converted into bytes");
+                throw new SerializationException("Type " + objType + " cannot be converted into bytes");
             }
         } //Boxing (Garbage collection)
         /// <summary>
@@ -250,6 +271,11 @@ namespace TgenSerializer
                 var val = BitConverter.ToUInt64(objData, startIndex);
                 return val is T ret ? ret : default;
             }
+            else if (typeof(T).Equals(typeof(decimal)))
+            {
+                //TODO
+                throw new NotSupportedException("Does not support decimal numbers yet");
+            }
             else
             {
                 throw new SerializationException("Type " + typeof(T) + " cannot be converted into bytes");
@@ -291,7 +317,7 @@ namespace TgenSerializer
             byte[] ret = new byte[size];
             int index = 0;
             for (int i = 0; i < bytes.Length; index += bytes[i].Length, i++)
-                Buffer.BlockCopy(bytes[i], 0, ret, index, bytes[i].Length);
+                System.Buffer.BlockCopy(bytes[i], 0, ret, index, bytes[i].Length);
 
             return ret;
         }
@@ -303,7 +329,7 @@ namespace TgenSerializer
             int index = 0;
             foreach (var byteGroup in bytes)
             {
-                Buffer.BlockCopy(byteGroup, 0, ret, index, byteGroup.Length);
+                System.Buffer.BlockCopy(byteGroup, 0, ret, index, byteGroup.Length);
                 index += byteGroup.Length;
             }
 

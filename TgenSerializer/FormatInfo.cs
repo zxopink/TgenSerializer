@@ -23,7 +23,7 @@ namespace TgenSerializer
 
         public void AddInfo(object obj)
         {
-            data += obj;
+            data += (Bytes)obj;
         }
 
         public T GetT<T>()

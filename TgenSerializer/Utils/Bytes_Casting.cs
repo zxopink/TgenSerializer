@@ -11,7 +11,7 @@ namespace TgenSerializer
         //public static explicit operator ByteBuilder(byte b) => new ByteBuilder(b);
 
         //implicit keyword means it automatically converts the types (Implicit conversions don't require special syntax to be invoked)
-        public static implicit operator byte[](Bytes builder) => builder.Array;
+        public static implicit operator byte[](Bytes builder) => builder.Buffer;
         public static implicit operator Bytes(byte[] b) => new Bytes(b);
 
         public static implicit operator Bytes(sbyte obj) => new Bytes(PrimitiveToByte(obj));
@@ -38,7 +38,8 @@ namespace TgenSerializer
         public static implicit operator ushort(Bytes obj) => B2P<ushort>(obj);
         public static implicit operator uint(Bytes obj) => B2P<uint>(obj);
         public static implicit operator ulong(Bytes obj) => B2P<ulong>(obj);
-        public static implicit operator string(Bytes str) => BytesToStr(str);
+        
+        public static explicit operator string(Bytes str) => BytesToStr(str);
 
         /// <summary>Converts the bytes to a UTF8 string</summary>
         public override string ToString() => 

@@ -53,7 +53,7 @@ namespace TgenSerializer
             public Type GraphType()
             {
                 Location += startClass.Length;
-                string strType = GetSection(equals);
+                string strType = GetSection(equals).ToString();
                 return Type.GetType(strType, true);
             }
             public object Start(Type objType)
@@ -210,7 +210,7 @@ namespace TgenSerializer
             private FieldInfo GetField(object obj)
             {
                 Location += startClass.Length;
-                string fieldName = GetSection(equals);
+                string fieldName = GetSection(equals).ToString();
                 Type objType = obj.GetType();
                 return GetFieldInfosIncludingBaseClasses(objType, fieldName);
                 //methods are also members
