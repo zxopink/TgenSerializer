@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Data;
+using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Runtime.Serialization;
@@ -40,6 +41,20 @@ namespace TgenSerializer
             //object result = Construction(typeOfObj, ref objData, ref startingPoint); //starting point
             return result;
         }
+        
+        //TODO
+        public static object Construct(byte[] objData, IList<TgenConverter> converters)
+        {
+            var constructor = new ConstructionGraph(0, objData);
+            Type typeOfObj = constructor.GraphType(converters);
+
+            if (!typeOfObj.IsSerializable) //PROTECTION
+                throw new MarshalException(MarshalError.NonSerializable, $"{typeOfObj} isn't a serializable type");
+
+            object result = constructor.Start(typeOfObj);
+            //object result = Construction(typeOfObj, ref objData, ref startingPoint); //starting point
+            return result;
+        }
 
         private struct ConstructionGraph
         {
@@ -52,8 +67,22 @@ namespace TgenSerializer
             }
             public Type GraphType()
             {
-                Location += startClass.Length;
                 string strType = GetSection(equals).ToString();
+                return Type.GetType(strType, true);
+            }
+            //TODO
+            public Type GraphType(IList<TgenConverter> converters)
+            {
+                Bytes section = GetSection(equals);
+                if (section.Length == sizeof(uint)) //Must be an id
+                {
+                    uint id = section.Get<uint>();
+                    Type t = converters?.FirstOrDefault(conv => conv.Id == id)?.Type;
+                    if (t != null) //Had id
+                        return t;
+                }
+
+                string strType = section.ToString();
                 return Type.GetType(strType, true);
             }
             public object Start(Type objType)

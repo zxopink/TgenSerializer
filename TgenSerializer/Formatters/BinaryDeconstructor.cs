@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
@@ -86,16 +87,32 @@ namespace TgenSerializer
         public static byte[] Deconstruct(object obj)
         {
             ByteBuilder builder = new ByteBuilder();
-            builder.Append(startClass, obj.GetType().AssemblyQualifiedName, equals);
+            builder.Append(obj.GetType().AssemblyQualifiedName, equals);
 
             var destructor = new DeconstructionGraph(builder);
             destructor.Start(obj);
 
             builder.Append(endClass);
             return builder.ToBytes();
-            //must delcare the type at first so the constructor later on knows with what type it deals
-            //the properties and fields can be aligned later on by using the first type, like a puzzle
-            //the name of the object doesn't matter (therefore doesn't need to be saved) as well since the it will be changed anyways
+        }
+        //TODO
+        public static byte[] Deconstruct(object obj, IList<TgenConverter> converters)
+        {
+            Type objType = obj.GetType();
+            uint? id = converters?.FirstOrDefault(conv => conv.Type == objType)?.Id;
+
+            ByteBuilder builder = new ByteBuilder();
+            if (id.HasValue)
+                builder.Append(id.Value);
+            else
+                builder.Append(objType.AssemblyQualifiedName);
+            builder.Append(equals);
+
+            var destructor = new DeconstructionGraph(builder);
+            destructor.Start(obj);
+
+            builder.Append(endClass);
+            return builder.ToBytes();
         }
 
         private struct DeconstructionGraph

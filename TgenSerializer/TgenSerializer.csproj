@@ -16,7 +16,7 @@
 Also provides a handy util Bytes class</Description>
     <Version>0.6.1</Version>
     
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
     <DefineConstants Condition="'$(AllowUnsafeBlocks)' == 'true'">AllowUnsafe</DefineConstants>
   </PropertyGroup>
 
