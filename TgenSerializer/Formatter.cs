@@ -21,10 +21,13 @@ namespace TgenSerializer
 
         public int maxSize = int.MaxValue;
 
-        public void Serialize(Stream stream, object obj)
-        {
+        public void Serialize(Stream stream, object obj) =>
             BinarySerialize(stream, obj, Converters);
-        }
+
+        public Bytes Serialize(object obj) =>
+            BinaryDeconstructor.Deconstruct(obj, Converters);
+        
+
         public static void BinarySerialize(Stream stream, object obj, IList<TgenConverter> converters)
         {
             BinaryWriter writer = new BinaryWriter(stream);
@@ -47,11 +50,13 @@ namespace TgenSerializer
              BinaryDeconstructor.Deconstruct(obj);
 
 
-        public object Deserialize(Stream stream)
-        {
-            return BinaryDeserialize(stream, Converters, maxSize);
-        }
+        public object Deserialize(Stream stream) =>
+            BinaryDeserialize(stream, Converters, maxSize);
         public T Deserialize<T>(Stream stream) => (T)Deserialize(stream);
+
+        public object Deserialize(Bytes graph) =>
+            BinaryConstructor.Construct(graph, Converters);
+        public T Deserialize<T>(Bytes graph) => (T)Deserialize(graph);
 
         public static object BinaryDeserialize(Stream stream, IList<TgenConverter> converters, int maxSize = int.MaxValue)
         {
