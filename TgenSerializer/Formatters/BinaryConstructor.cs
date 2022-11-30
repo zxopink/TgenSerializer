@@ -115,7 +115,7 @@ namespace TgenSerializer
 
                 if (typeof(IEnumerable).IsAssignableFrom(objType)) //arrays/enumerators(sorta lists)/lists
                 {
-                    if (objType.IsArray)
+                    if (objType.IsArray /*&& objType.GetElementType().IsPrimitive*/)
                         return ArrObjConstructor(objType);
                     return ListObjConstructor(objType);
                 }

@@ -37,10 +37,6 @@ namespace TgenSerializer
                 writer.Write(packet.Length);
                 writer.Write(packet);
             }
-            catch (Exception)
-            {
-                throw;
-            }
             finally
             {
                 writer.Flush();

@@ -255,11 +255,16 @@ namespace TgenSerializer
 
             private void ListObjDeconstructor(IList list)
             {
-                if (list.GetType().IsArray)
+                Type type = list.GetType();
+                if (type.IsArray && type.GetElementType().IsPrimitive)
                 {
-                    //if (list is List<byte>)
-                    //    return ((List<byte>)list).ToArray();
-                    Graph.Append(list.Count);
+                    Array primArray = (Array)list;
+                    int len = Buffer.ByteLength(primArray);
+                    byte[] data = list is byte[] bArr ? bArr : new byte[len];
+                    
+
+                    //TOFINISH
+                    Graph.Append(len);
                     if (list is byte[] byteArr)
                     {
                         Graph.Append(startEnum);
