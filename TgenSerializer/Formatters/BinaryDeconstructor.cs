@@ -11,7 +11,7 @@ using TgenSerializer.Utils;
 
 namespace TgenSerializer
 {
-    public class BinaryDeconstructor
+    internal class BinaryDeconstructor
     {
         //These fields are shared both by the constructor and constructor
         //NOTE: BetweenEnum and EndClass must have the same lenght since the serlizer treats them as the end of a class

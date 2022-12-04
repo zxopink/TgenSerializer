@@ -44,7 +44,7 @@ namespace TgenSerializer
         #endregion
     }
 
-    public static class JsonGlobalOperations
+    internal static class JsonGlobalOperations
     {
         //These fields are shared both by the Constructor and Deconstructor
         #region Global Fields
@@ -64,7 +64,7 @@ namespace TgenSerializer
         #endregion
     }
 
-    public static class BinaryGlobalOperations
+    internal static class BinaryGlobalOperations
     {
         //These fields are shared both by the Constructor and Deconstructor
         //NOTE: BetweenEnum and EndClass must have the same lenght since the serlizer treats them as the end of a class

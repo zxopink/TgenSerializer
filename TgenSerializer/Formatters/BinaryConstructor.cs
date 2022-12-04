@@ -9,7 +9,7 @@ using System.Runtime.Serialization;
 
 namespace TgenSerializer
 {
-    public static class BinaryConstructor
+    internal static class BinaryConstructor
     {
         //These fields are shared both by the constructor and constructor
         //NOTE: BetweenEnum and EndClass must have the same lenght since the serlizer treats them as the end of a class
