@@ -20,11 +20,11 @@ The returned object has all the properties of the serialized one.
 * Uninitialized object is an object that was created without a constructor call.
 
 ## Bytes
-The `Bytes` class is a tool that works just like `StringBuilder` but for byte arrays.
+The `Bytes` class is a tool that works much like `string` but for byte arrays.
 It's used to make the work with arrays of byte arrays easier and simpler. (Like pythons')
 
-With the `Bytes` class you can use mathematical operations (`+` & `-`) to concat arrays of bytes or remove them.
-It also includes implicit cast operations to easily cast primitive objects into bytes.  
+With the `Bytes` class you can use addition (`+`) to concat arrays of bytes.
+It also includes implicit cast operations to easily cast primitive objects into bytes and back.  
 Example:
 ```cs
     Bytes hello = "Hello ";

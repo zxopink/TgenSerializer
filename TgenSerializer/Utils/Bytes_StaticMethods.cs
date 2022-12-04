@@ -282,19 +282,18 @@ namespace TgenSerializer
             }
         } //No boxing
 
-        public static byte[] GetBytes(bool value) => BitConverter.GetBytes(value);
-        public static byte[] GetBytes(char value) => BitConverter.GetBytes(value);
-        public static byte[] GetBytes(short value) => BitConverter.GetBytes(value);
-        public static byte[] GetBytes(int value) => BitConverter.GetBytes(value);
-        public static byte[] GetBytes(long value) => BitConverter.GetBytes(value);
-        public static byte[] GetBytes(ushort value) => BitConverter.GetBytes(value);
-        public static byte[] GetBytes(uint value) => BitConverter.GetBytes(value);
-        public static byte[] GetBytes(ulong value) => BitConverter.GetBytes(value);
-        public static byte[] GetBytes(float value) => BitConverter.GetBytes(value);
-        public static byte[] GetBytes(double value) => BitConverter.GetBytes(value);
-        public static byte[] GetBytes(string value) => StrToBytes(value);
-
-        public static byte[] ToBytes(params object[] objects)
+        public static Bytes GetBytes(bool value) => (Bytes)BitConverter.GetBytes(value);
+        public static Bytes GetBytes(char value) => (Bytes)BitConverter.GetBytes(value);
+        public static Bytes GetBytes(short value) => (Bytes)BitConverter.GetBytes(value);
+        public static Bytes GetBytes(int value) => (Bytes)BitConverter.GetBytes(value);
+        public static Bytes GetBytes(long value) => (Bytes)BitConverter.GetBytes(value);
+        public static Bytes GetBytes(ushort value) => (Bytes)BitConverter.GetBytes(value);
+        public static Bytes GetBytes(uint value) => (Bytes)BitConverter.GetBytes(value);
+        public static Bytes GetBytes(ulong value) => (Bytes)BitConverter.GetBytes(value);
+        public static Bytes GetBytes(float value) => (Bytes)BitConverter.GetBytes(value);
+        public static Bytes GetBytes(double value) => (Bytes)BitConverter.GetBytes(value);
+        public static Bytes GetBytes(string value) => (Bytes)StrToBytes(value);
+        public static Bytes GetBytes(params object[] objects)
         {
             byte[][] list = new byte[objects.Length][];
             for (int i = 0; i < list.Length; i++)
@@ -305,10 +304,9 @@ namespace TgenSerializer
                     list[i] = byteArr;
                     continue;
                 }
-                byte[] arr = PrimitiveToByte(item);
-                list[i] = arr;
+                list[i] = PrimitiveToByte(item);
             }
-            return Concat(list);
+            return (Bytes)Concat(list);
         }
 
         public static byte[] Concat(params byte[][] bytes)
@@ -332,7 +330,6 @@ namespace TgenSerializer
                 System.Buffer.BlockCopy(byteGroup, 0, ret, index, byteGroup.Length);
                 index += byteGroup.Length;
             }
-
             return ret;
         }
 
