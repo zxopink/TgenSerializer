@@ -25,7 +25,6 @@ namespace TgenSerializer
         private static Bytes serializerEntry = BinaryGlobalOperations.serializerEntry; //start of serializer object
         private static Bytes serializerExit = BinaryGlobalOperations.serializerExit; //end of serializer object
         private static Bytes typeEntry = BinaryGlobalOperations.typeEntry; //divides the name and type of an object]
-        [Obsolete]
         private static Bytes nullObj = BinaryGlobalOperations.nullObj; //sign for a nullObj (deprecated)
 
         private const BindingFlags bindingFlags = GlobalOperations.bindingFlags; //specifies to get both public and non public fields and properties
@@ -149,11 +148,12 @@ namespace TgenSerializer
                     return;
                 }
 
-                else if (obj is ISerializable)
+                else if (obj is ISerializable serializableObj)
                 {
-                    var writer = new DataWriter();
-                    ((ISerializable)obj).Serialize(writer);
-                    Graph.Append(writer.GetData());
+                    Bytes data = serializableObj.Serialize();
+                    int size = data.Length;
+                    Graph.Append(size);
+                    Graph.Append(data);
                     return;
                 }
 

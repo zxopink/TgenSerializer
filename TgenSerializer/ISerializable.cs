@@ -6,11 +6,11 @@ using System.Text;
 namespace TgenSerializer
 {
     /// <summary>An interface for classes that control their own Serialize and Deserialize operations.
-    /// Must have a default (No parameters) constructor!<summary>
+    /// Must have a parameterless constructor<summary>
     public interface ISerializable
     {
-        void Serialize(DataWriter writer);
+        Bytes Serialize();
 
-        void Deserialize(DataReader reader);
+        void Deserialize(Bytes data);
     }
 }

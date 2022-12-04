@@ -113,18 +113,7 @@ namespace TgenSerializer
 
 
                 if (typeof(ISerializable).IsAssignableFrom(objType))
-                {
-                    Bytes valueStr = GetSection(endClass);
-                    var reader = new DataReader(valueStr);
-                    var obj = ((ISerializable)Activator.CreateInstance(objType));
-                    obj.Deserialize(reader);
-                    return obj;
-                }
-
-                //if (objType.IsValueType) //obj is struct
-                //{
-                //    
-                //}
+                    return GetSerializable(objType);
 
                 if (typeof(IList).IsAssignableFrom(objType)) //arrays/ILists
                 {
@@ -163,6 +152,26 @@ namespace TgenSerializer
                 Location += size;
                 return value;
             }
+
+            private ISerializable GetSerializable(Type type)
+            {
+                int length = Bytes.B2P<int>(Graph, Location);
+                Location += sizeof(int);
+
+                if (!CheckHitOperator(endClass, Location + length))
+                    throw new SerializationException($"size for ISerializeable ({type}) is mismatched");
+
+                int startIndex = Location;
+                Location += length; //Append location before allocation, it might be too big
+
+                byte[] seriData = new byte[length];
+                Buffer.BlockCopy(Graph, startIndex, seriData, 0, length);
+
+                ISerializable obj = (ISerializable)Activator.CreateInstance(type);
+                obj.Deserialize((Bytes)seriData);
+                return obj;
+            }
+
             private string GetString()
             {
                 int length = Bytes.B2P<int>(Graph, Location);
