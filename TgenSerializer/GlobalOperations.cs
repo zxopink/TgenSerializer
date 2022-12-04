@@ -79,8 +79,7 @@ namespace TgenSerializer
         public static byte[] serializerEntry = Encoding.UTF8.GetBytes("!");
         public static byte[] serializerExit = Encoding.UTF8.GetBytes("~");
         public static byte[] typeEntry = Encoding.UTF8.GetBytes("/");
-        [Obsolete]
-        public static byte[] nullObj = Encoding.UTF8.GetBytes("");
+        public static byte[] nullObj = Encoding.UTF8.GetBytes(string.Empty);
         #endregion
     }
 }

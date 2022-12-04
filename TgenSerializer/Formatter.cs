@@ -5,7 +5,7 @@ using System.Runtime.Serialization;
 
 namespace TgenSerializer
 {
-    public class Formatter : IFormatter
+    public class TgenFormatter : IFormatter
     {
 
         public SerializationBinder Binder { get => throw new NotSupportedException(); set => throw new NotSupportedException(); }
@@ -14,7 +14,7 @@ namespace TgenSerializer
 
         public IList<TgenConverter> Converters { get; set; }
 
-        public Formatter()
+        public TgenFormatter()
         {
             
         }
@@ -42,8 +42,6 @@ namespace TgenSerializer
                 writer.Flush();
             }
         }
-        public static byte[] ToBytes(object obj) =>
-             BinaryDeconstructor.Deconstruct(obj);
 
 
         public object Deserialize(Stream stream) =>
@@ -66,8 +64,5 @@ namespace TgenSerializer
             byte[] packet = reader.ReadBytes(size);
             return BinaryConstructor.Construct(packet, converters);
         }
-
-        public static object FromBytes(byte[] data) =>
-            BinaryConstructor.Construct(data);
     }
 }

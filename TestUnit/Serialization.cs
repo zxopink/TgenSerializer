@@ -5,7 +5,6 @@ using System.Runtime.Serialization.Formatters.Binary;
 using System.Runtime.Serialization;
 using System.Text;
 using System.Threading.Tasks;
-using Formatter = TgenSerializer.Formatter;
 
 namespace TestUnit
 {
@@ -22,7 +21,7 @@ namespace TestUnit
     internal class Serialization
     {
         public TestComplexClass TestClass { get; set; }
-        Formatter Formatter { get; set; }
+        TgenFormatter Formatter { get; set; }
         public MemoryStream MemoryStream { get; set; }
 
         [SetUp]
@@ -35,7 +34,7 @@ namespace TestUnit
                 new byte[50],
                 new int[80],
                 new List<double>());
-            Formatter = new Formatter();
+            Formatter = new TgenFormatter();
             MemoryStream = new();
         }
 

@@ -28,32 +28,25 @@ namespace TgenSerializer
 
         private const BindingFlags bindingFlags = GlobalOperations.bindingFlags; //specifies to get both public and non public fields and properties
         #endregion
-
-        public static object Construct(byte[] objData)
-        {
-            var constructor = new ConstructionGraph(0, objData);
-            Type typeOfObj = constructor.GraphType();
-
-            if (!typeOfObj.IsSerializable) //PROTECTION
-                throw new MarshalException(MarshalError.NonSerializable, $"{typeOfObj} isn't a serializable type");
-
-            object result = constructor.Start(typeOfObj);
-            //object result = Construction(typeOfObj, ref objData, ref startingPoint); //starting point
-            return result;
-        }
         
-        //TODO
         public static object Construct(byte[] objData, IList<TgenConverter> converters)
         {
-            var constructor = new ConstructionGraph(0, objData);
-            Type typeOfObj = constructor.GraphType(converters);
+            try
+            {
+                var constructor = new ConstructionGraph(0, objData);
+                Type typeOfObj = constructor.GraphType(converters);
 
-            if (!typeOfObj.IsSerializable) //PROTECTION
-                throw new MarshalException(MarshalError.NonSerializable, $"{typeOfObj} isn't a serializable type");
+                if (!typeOfObj.IsSerializable) //PROTECTION
+                    throw new MarshalException(MarshalError.NonSerializable, $"{typeOfObj} isn't a serializable type");
 
-            object result = constructor.Start(typeOfObj);
-            //object result = Construction(typeOfObj, ref objData, ref startingPoint); //starting point
-            return result;
+                object result = constructor.Start(typeOfObj);
+                //object result = Construction(typeOfObj, ref objData, ref startingPoint); //starting point
+                return result;
+            }
+            catch (SerializationException)
+            { throw; }
+            catch (Exception e)
+            { throw new MarshalException(e); }
         }
 
         private struct ConstructionGraph
@@ -111,7 +104,6 @@ namespace TgenSerializer
                 if (objType == typeof(string))
                     return GetString();
 
-
                 if (typeof(ISerializable).IsAssignableFrom(objType))
                     return GetSerializable(objType);
 
@@ -125,6 +117,7 @@ namespace TgenSerializer
                 object instance = FormatterServices.GetUninitializedObject(objType);
                 while (CheckHitOperator(startClass, Location))
                 {
+                    Location += startClass.Length;
                     FieldInfo fieldInfo = GetField(instance); //detect the field inside obj
 
                     //if the field isn't primitive, make a new instance of it
@@ -261,7 +254,6 @@ namespace TgenSerializer
             /// <returns>Field inside the obj type</returns>
             private FieldInfo GetField(object obj)
             {
-                Location += startClass.Length;
                 string fieldName = GetSection(equals).ToString();
                 Type objType = obj.GetType();
                 return GetFieldInfosIncludingBaseClasses(objType, fieldName);

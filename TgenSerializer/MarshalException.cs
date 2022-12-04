@@ -30,6 +30,12 @@ namespace TgenSerializer
             description = message;
         }
 
+        public MarshalException(Exception innerException) : base(innerException.Message, innerException)
+        {
+            Error = MarshalError.InternalError;
+            description = innerException.Message;
+        }
+
         private string GetMessage(MarshalError error)
         {
             switch (error)

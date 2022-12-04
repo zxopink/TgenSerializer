@@ -61,7 +61,8 @@ namespace TestUnit
             Assert.That(test, Is.EqualTo(result));
         }
 
-        private byte[] Serialize(object obj) => BinaryDeconstructor.Deconstruct(obj);
-        private T Deserialize<T>(byte[] graph) => (T)BinaryConstructor.Construct(graph);
+        public TgenFormatter Formatter = new();
+        private byte[] Serialize(object obj) => Formatter.Serialize(obj);
+        private T Deserialize<T>(byte[] graph) => Formatter.Deserialize<T>(graph);
     }
 }

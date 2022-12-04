@@ -83,35 +83,30 @@ namespace TgenSerializer
         }
         #endregion
 
-        public static byte[] Deconstruct(object obj)
-        {
-            ByteBuilder builder = new ByteBuilder();
-            builder.Append(obj.GetType().AssemblyQualifiedName, equals);
-
-            var destructor = new DeconstructionGraph(builder);
-            destructor.Start(obj);
-
-            builder.Append(endClass);
-            return builder.ToBytes();
-        }
-        //TODO
         public static byte[] Deconstruct(object obj, IList<TgenConverter> converters)
         {
-            Type objType = obj.GetType();
-            uint? id = converters?.FirstOrDefault(conv => conv.Type == objType)?.Id;
+            try
+            {
+                Type objType = obj.GetType();
+                uint? id = converters?.FirstOrDefault(conv => conv.Type == objType)?.Id;
 
-            ByteBuilder builder = new ByteBuilder();
-            if (id.HasValue)
-                builder.Append(id.Value);
-            else
-                builder.Append(objType.AssemblyQualifiedName);
-            builder.Append(equals);
+                ByteBuilder builder = new ByteBuilder();
+                if (id.HasValue)
+                    builder.Append(id.Value);
+                else
+                    builder.Append(objType.AssemblyQualifiedName);
+                builder.Append(equals);
 
-            var destructor = new DeconstructionGraph(builder);
-            destructor.Start(obj);
+                var destructor = new DeconstructionGraph(builder);
+                destructor.Start(obj);
 
-            builder.Append(endClass);
-            return builder.ToBytes();
+                builder.Append(endClass);
+                return builder.ToBytes();
+            }
+            catch (SerializationException)
+            { throw; }
+            catch (Exception e)
+            { throw new MarshalException(e); }
         }
 
         private struct DeconstructionGraph

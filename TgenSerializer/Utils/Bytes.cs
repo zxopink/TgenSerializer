@@ -9,7 +9,7 @@ using System.Text;
 
 namespace TgenSerializer
 {
-    /// <summary>A utility class for an array of bytes</summary>
+    /// <summary>An immutable utility class for an array of bytes</summary>
     public partial struct Bytes
     {
         private byte[] _buffer { get; set; }

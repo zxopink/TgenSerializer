@@ -10,12 +10,13 @@ namespace TestUnit
     [TestFixture]
     internal class TuplesTest
     {
+        public TgenFormatter Formatter = new();
         [Test]
         public void ValueTuple()
         {
             (int x, int y) val = (10, 15);
-            Bytes ret = BinaryDeconstructor.Deconstruct(val);
-            (int x, int y) reted = ((int x, int y))BinaryConstructor.Construct(ret);
+            Bytes ret = Formatter.Serialize(val);
+            (int x, int y) reted = Formatter.Deserialize<(int x, int y)>(ret);
             Assert.That(val, Is.EqualTo(reted));
         }
 
@@ -23,8 +24,8 @@ namespace TestUnit
         public void Tuple()
         {
             Tuple<int, int> val = new Tuple<int, int>(10, 10);
-            Bytes ret = BinaryDeconstructor.Deconstruct(val);
-            Tuple<int, int> reted = (Tuple<int, int>)BinaryConstructor.Construct(ret);
+            Bytes ret = Formatter.Serialize(val);
+            Tuple<int, int> reted = Formatter.Deserialize<Tuple<int, int>> (ret);
             Assert.That(val, Is.EqualTo(reted));
         }
     }

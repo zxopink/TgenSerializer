@@ -9,7 +9,6 @@ using System.Threading.Tasks;
 using BenchmarkDotNet;
 using BenchmarkDotNet.Attributes;
 using TgenSerializer;
-using Formatter = TgenSerializer.Formatter;
 
 namespace BenchMarkTests
 {
@@ -29,7 +28,7 @@ namespace BenchMarkTests
         { nameof(TgenSerialize), nameof(TgenDeserialize) })]
         public void TgenSetup()
         {
-            Formatter = new Formatter();
+            Formatter = new TgenFormatter();
         }
         [GlobalSetup(Targets = new[]
         { nameof(BinarySerialize), nameof(BinaryDeserialize) })]
