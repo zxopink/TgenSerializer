@@ -20,8 +20,6 @@ Also provides a handy util Bytes class</Description>
     <DefineConstants Condition="'$(AllowUnsafeBlocks)' == 'true'">AllowUnsafe</DefineConstants>
   </PropertyGroup>
 
-  
-
     <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <CheckForOverflowUnderflow>False</CheckForOverflowUnderflow>
   </PropertyGroup>

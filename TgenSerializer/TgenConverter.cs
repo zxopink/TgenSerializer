@@ -22,7 +22,12 @@ namespace TgenSerializer
 
         public static List<TgenConverter> CreateConvertersFromAssembly(params Assembly[] assmblies)
         {
-            Type[] types = assmblies.SelectMany(assm => assm.GetTypes()).ToArray();
+            List<Type> types = assmblies.SelectMany(assm => assm.GetTypes())
+                .Where(t => t.IsSerializable).ToList();
+
+            //Sort them all, not sure if `GetTypes()` is CLR dependant
+            types.Sort((t1, t2) => t1.ToString().CompareTo(t2.ToString()));
+
             List<TgenConverter> converters = new List<TgenConverter>();
             uint counter = 0;
             foreach (var type in types)
@@ -31,9 +36,6 @@ namespace TgenSerializer
                 TgenConverter conv = new TgenConverter(type, counter++);
                 converters.Add(conv);
             }
-            
-            //Sort them all, not sure if `GetTypes()` is CLR dependant
-            converters.Sort((conv1, conv2) => conv1.Type.ToString().CompareTo(conv2.Type.ToString()));
             return converters;
         }
     }

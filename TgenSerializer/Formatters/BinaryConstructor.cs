@@ -58,11 +58,24 @@ namespace TgenSerializer
 
         private struct ConstructionGraph
         {
-            int Location { get; set; }
-            byte[] Graph { get; set; }
-            public ConstructionGraph(int location, byte[] graph)
+            int MaxSize { get; set; }
+            int _location;
+            int Location
             {
-                Location = location;
+                get => _location;
+                set 
+                {
+                    _location = value; //Add check if hit max value
+                    if (Location > MaxSize)
+                        throw new MarshalException(MarshalError.TooLarge, $"Tried to reach location {Location}");
+                }
+
+            }
+            byte[] Graph { get; set; }
+            public ConstructionGraph(int location, byte[] graph, int maxSize = int.MaxValue)
+            {
+                MaxSize = maxSize;
+                _location = location;
                 Graph = graph;
             }
             public Type GraphType()
@@ -113,11 +126,11 @@ namespace TgenSerializer
                 //    
                 //}
 
-                if (typeof(IEnumerable).IsAssignableFrom(objType)) //arrays/enumerators(sorta lists)/lists
+                if (typeof(IList).IsAssignableFrom(objType)) //arrays/ILists
                 {
-                    if (objType.IsArray /*&& objType.GetElementType().IsPrimitive*/)
-                        return ArrObjConstructor(objType);
-                    return ListObjConstructor(objType);
+                    if (objType.IsArray)
+                        return ArrConstruction(objType);
+                    return ListConstruction(objType);
                 }
 
                 object instance = FormatterServices.GetUninitializedObject(objType);
@@ -137,9 +150,8 @@ namespace TgenSerializer
 
                     var obj = Construct(typeOfInstance);
                     fieldInfo.SetValue(instance, obj); //Will always be a field, at some cases a backingField
-                                                       //SetValue(fieldInfo, instance, obj); //set the new field instance to the obj
+                    Location += endClass.Length;
                 }
-                Location += endClass.Length;
                 return instance;
             }
 
@@ -149,7 +161,6 @@ namespace TgenSerializer
                 int size = Marshal.SizeOf(objType);
                 object value = Bytes.ByteToPrimitive(objType, Graph, Location);
                 Location += size;
-                Location += endClass.Length;
                 return value;
             }
             private string GetString()
@@ -159,47 +170,50 @@ namespace TgenSerializer
 
                 if (!CheckHitOperator(endClass, Location + length))
                     throw new SerializationException("size for string is mismatched");
+
+                int startIndex = Location;
+                Location += length; //Append location before allocation, it might be too big
+
                 byte[] strData = new byte[length];
-                Buffer.BlockCopy(Graph, Location, strData, 0, length);
-                Location += length;
-                Location += endClass.Length;
+                Buffer.BlockCopy(Graph, startIndex, strData, 0, length);
                 return Bytes.BytesToStr(strData);
             }
 
-            private object ArrObjConstructor(Type objType)
+            private object ArrConstruction(Type objType) //Type is an array
             {
-                //int length = int.Parse(GetSection(ref dataInfo, startEnum, ref location)); //removes the start "<" and gets the array's length
+                Type elementType = objType.GetElementType();
                 int length = Bytes.B2P<int>(Graph, Location);
                 Location += sizeof(int);
                 Location += startEnum.Length;
 
-                if (objType.IsArray && objType.Equals(typeof(byte[])))
+                if (elementType.IsPrimitive) //Primitive array constructions
                 {
-                    if (!CheckHitOperator(endClass, Location + length))
+                    if (!CheckHitOperator(endEnum, Location + length))
                         throw new SerializationException("size for array is mismatched");
-                    byte[] byteArr = new byte[length];
 
-                    Buffer.BlockCopy(Graph, Location, byteArr, 0, length);
+                    int startIndex = Location;
+                    Location += length; //Append location before allocation, it might be too big
 
-                    Location += byteArr.Length;
+                    Array primArr = Array.CreateInstance(elementType, length / Marshal.SizeOf(elementType));
+                    Buffer.BlockCopy(Graph, startIndex, primArr, 0, length);
+
                     Location += endEnum.Length;
-                    Location += endClass.Length;
-                    return byteArr;
+                    return primArr;
                 }
 
-                var instance = (IList)Activator.CreateInstance(objType, new object[] { length });
-                Type typeOfInstance = objType.GetElementType(); //Gets the type this array contrains, like the 'object' part of object[]
+                //Managed array types constructions
+                var instance = Array.CreateInstance(elementType, length);
                 for (int i = 0; i < length; i++)
                 {
-                    object item = Construct(typeOfInstance);
-                    instance[i] = item; //Can't use add!
+                    object item = Construct(elementType);
+                    instance.SetValue(item, i);
+                    Location += endClass.Length;
                 }
                 Location += endEnum.Length;
-                Location += endClass.Length;
                 return instance;
             }
 
-            private object ListObjConstructor(Type objType)
+            private object ListConstruction(Type objType)
             {
                 IList instance = (IList)Activator.CreateInstance(objType);
                 Type typeOfInstance = objType.GetGenericArguments()[0];
@@ -208,9 +222,9 @@ namespace TgenSerializer
                 {
                     object item = Construct(typeOfInstance);
                     instance.Add(item);
+                    Location += endClass.Length;
                 }
                 Location += endEnum.Length;
-                Location += endClass.Length;
                 return instance;
             }
 
@@ -303,9 +317,10 @@ namespace TgenSerializer
                             return false;
                     return true;
                 }
-                catch (StackOverflowException)
+                catch (SystemException ex) when (ex is IndexOutOfRangeException ||
+                                                 ex is StackOverflowException)
                 {
-                    throw new MarshalException(MarshalError.SyntaxError);
+                    throw new MarshalException(MarshalError.SyntaxError, "Operator failiure", ex);
                 }
             }
         }

@@ -29,7 +29,7 @@ namespace BenchMarkTests
         { nameof(TgenSerialize), nameof(TgenDeserialize) })]
         public void TgenSetup()
         {
-            Formatter = new Formatter(CompressionFormat.Binary);
+            Formatter = new Formatter();
         }
         [GlobalSetup(Targets = new[]
         { nameof(BinarySerialize), nameof(BinaryDeserialize) })]

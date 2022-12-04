@@ -145,7 +145,7 @@ namespace TgenSerializer
 
                 else if (obj is string str)
                 {
-                    Graph.Append(Bytes.ToBytes(str.Length, Bytes.StrToBytes(str)));
+                    Graph.Append(str.Length, Bytes.StrToBytes(str));
                     return;
                 }
 
@@ -162,9 +162,9 @@ namespace TgenSerializer
                     throw new SerializationException($"{type} is missing a {nameof(SerializableAttribute)}");
                 }
 
-                else if (obj is IList) //string is also an enum but will never reach here thanks to the primitive check
+                else if (obj is IList list) //Breaks down ILists with optimization for primitive arrays
                 {
-                    ListObjDeconstructor((IList)obj);
+                    ListObjDeconstructor(list);
                     return;
                 }
 
@@ -191,7 +191,6 @@ namespace TgenSerializer
                         Graph.Append(startClass, field.Name, equals);
                         Destruct(fieldValue);
                         Graph.Append(endClass);
-
                     }
                     else
                     {
@@ -260,19 +259,25 @@ namespace TgenSerializer
                 {
                     Array primArray = (Array)list;
                     int len = Buffer.ByteLength(primArray);
-                    byte[] data = list is byte[] bArr ? bArr : new byte[len];
-                    
 
-                    //TOFINISH
-                    Graph.Append(len);
+                    byte[] data;
                     if (list is byte[] byteArr)
+                        data = byteArr;
+                    else
                     {
-                        Graph.Append(startEnum);
-                        Graph.Append(byteArr);
-                        Graph.Append(endEnum);
-                        return;
+                        data = new byte[len];
+                        Buffer.BlockCopy(primArray, 0, data, 0, len);
                     }
+                    Graph.Append(len);
+                    Graph.Append(startEnum);
+                    Graph.Append(data);
+                    Graph.Append(endEnum);
+                    return;
                 }
+
+                if(type.IsArray)
+                    Graph.Append(list.Count);
+
                 Graph.Append(startEnum);
                 foreach (var member in list)
                 {
