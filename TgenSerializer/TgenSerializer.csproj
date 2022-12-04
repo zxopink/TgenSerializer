@@ -41,6 +41,7 @@ Also provides a handy util Bytes class</Description>
     <Compile Remove="JsonElement.cs" />
     <Compile Remove="Utils\DataReader.cs" />
     <Compile Remove="Utils\DataWriter.cs" />
+    <Compile Remove="FormatInfo.cs" />
   </ItemGroup>
   
   <ItemGroup>
