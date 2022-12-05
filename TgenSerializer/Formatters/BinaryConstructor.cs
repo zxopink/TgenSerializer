@@ -1,12 +1,16 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Data;
+using System.Linq;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Runtime.Serialization;
+using TgenSerializer.Utils;
 
 namespace TgenSerializer
 {
-    public static class BinaryConstructor
+    internal static class BinaryConstructor
     {
         //These fields are shared both by the constructor and constructor
         //NOTE: BetweenEnum and EndClass must have the same lenght since the serlizer treats them as the end of a class
@@ -25,267 +29,301 @@ namespace TgenSerializer
 
         private const BindingFlags bindingFlags = GlobalOperations.bindingFlags; //specifies to get both public and non public fields and properties
         #endregion
-
-        public static object Construct(byte[] objData)
-        {
-            int startingPoint = 0;
-            startingPoint += startClass.Length;
-            string strType = GetSection(ref objData, equals, ref startingPoint);
-            Type typeOfObj = Type.GetType(strType, true);
-
-            if (!typeOfObj.IsSerializable) //PROTECTION
-                throw new MarshalException(MarshalError.NonSerializable, $"{typeOfObj} isn't a serializable type");
-            object result = Construction(typeOfObj, ref objData, ref startingPoint); //starting point
-            return result;
-        }
-
-        /// <summary>
-        /// In this method each class takes care of itself
-        /// not a weird mix of confusing actions
-        /// </summary>
-        /// <param name="obj"></param>
-        /// <param name="mainType"></param>
-        /// <returns></returns>
-        private static object Construction(Type objType, ref byte[] objData, ref int location)
-        {
-            if (objType.IsPrimitive || objType == typeof(string)) //Primitive values
-            {
-                return GetValue(objType, ref objData, ref location);
-            }
-
-            if (typeof(ISerializable).IsAssignableFrom(objType))
-            {
-                Bytes valueStr = GetSection(ref objData, endClass, ref location);
-                var reader = new DataReader(valueStr);
-                var obj = ((ISerializable)Activator.CreateInstance(objType));
-                obj.Deserialize(reader);
-                return obj;
-            }
-
-            //if (objType.IsValueType) //obj is struct
-            //{
-            //    
-            //}
-
-            if (typeof(IEnumerable).IsAssignableFrom(objType)) //arrays/enumerators(sorta lists)/lists
-            {
-                if (objType.IsArray)
-                    return ArrObjConstructor(objType, ref objData, ref location);
-                return ListObjConstructor(objType, ref objData, ref location);
-            }
-
-            object instance = FormatterServices.GetUninitializedObject(objType);
-            while (CheckHitOperator(objData, startClass, location))
-            {
-                FieldInfo fieldInfo = GetField(instance, ref objData, ref location); //detect the field inside obj
-                
-                //if the field isn't primitive, make a new instance of it
-                //NOTE: strings must be initialized
-                Type typeOfInstance = GetMemberType(fieldInfo);
-
-                if (fieldInfo.IsNotSerialized)
-                    continue;
-
-                if (!typeOfInstance.IsSerializable) //PROTECTION
-                    throw new MarshalException(MarshalError.NonSerializable, $"{typeOfInstance} isn't a serializable type");
-
-                var obj = Construction(typeOfInstance, ref objData, ref location);
-                fieldInfo.SetValue(instance, obj); //Will always be a field, at some cases a backingField
-                //SetValue(fieldInfo, instance, obj); //set the new field instance to the obj
-            }
-            location += endClass.Length;
-            return instance;
-
-            #region SpecialCases
-            /*Special cases so far:
-             * 1. Object is null (Done)
-             * 2. Object points to itself in an infnite loop (Done)
-             * 3. backingField (Done)
-             * 4. Object is an enum/list/array (Done)
-            */
-            #endregion
-        }
-
-        private static object GetValue(Type objType, ref byte[] dataInfo, ref int location)
-        {
-            Bytes valueStr = GetSection(ref dataInfo, endClass, ref location);
-            valueStr = valueStr == nullObj ? null : valueStr; //if the value is null, set it to null
-            return Bytes.ByteToPrimitive(objType, valueStr);
-        }
-
-        private static object ArrObjConstructor(Type objType, ref byte[] dataInfo, ref int location)
-        {
-            int length = int.Parse(GetSection(ref dataInfo, startEnum, ref location)); //removes the start "<" and gets the array's length
-            //ON THIN ICE
-            if (objType.IsArray && objType.Equals(typeof(byte[])))
-            {
-                byte[] byteArr = new byte[length];
-
-                Buffer.BlockCopy(dataInfo, location, byteArr, 0, length);
-                //for (int i = 0; i < length; i++)
-                //    byteArr[i] = dataInfo[location + i];
-
-                location += byteArr.Length;
-                location += endEnum.Length;
-                location += endClass.Length;
-                return byteArr;
-            }
-
-            var instance = (IList)Activator.CreateInstance(objType, new object[] { length });
-            Type typeOfInstance = objType.GetElementType(); //Gets the type this array contrains, like the 'object' part of object[]
-            for (int i = 0; !CheckHitOperator(dataInfo, endEnum, location); i++)
-            {
-                object item = Construction(typeOfInstance, ref dataInfo, ref location);
-                instance[i] = item; //Can't use add!
-            }
-            location += endEnum.Length;
-            location += endClass.Length;
-            return instance;
-        }
-
-        private static object ListObjConstructor(Type objType, ref byte[] dataInfo, ref int location)
-        {
-            IList instance = (IList)Activator.CreateInstance(objType);
-            Type typeOfInstance = objType.GetGenericArguments()[0];
-            location += startEnum.Length;
-            while (!CheckHitOperator(dataInfo, endEnum, location))
-            {
-                object item = Construction(typeOfInstance, ref dataInfo, ref location);
-                instance.Add(item);
-            }
-            location += endEnum.Length;
-            location += endClass.Length;
-            return instance;
-        }
-
-        /// <summary>
-        /// This function was made to shorten my code, fieldinfo and property info both inherit from MemberInfo
-        /// but to set the said field/property you must cast it back to field or property (depends on it's original type)
-        /// </summary>
-        /// <param name="objType">the info of the field/propery</param>
-        /// <param name="obj">The value of the assigned member info</param>
-        /// <param name="instance">Mother object of the member info </param>
-        /*
-        private static void SetValue(FieldInfo objType, object instance, object obj)
-        {
-
-            if (objType is FieldInfo)
-                ((FieldInfo)objType).SetValue(instance, obj);
-            else
-                ((PropertyInfo)objType).GetSetMethod()?.Invoke(instance, new object[1] { obj }); //SetValue could be used but better not to
-        }
-        */
-
-        /// <summary>
-        /// checks if the given MemberInfo is a field or a property
-        /// (MemberInfo can only be a field, property and a method by COM)
-        /// since a serilizer doesn't check for methods, we only check if the MemberInfo is a field or a property
-        /// </summary>
-        /// <param name="objType"></param>
-        /// <returns></returns>
-        private static Type GetMemberType(MemberInfo objType)
-        {
-            if (objType is FieldInfo)
-                return ((FieldInfo)objType).IsNotSerialized ? throw new MarshalException(MarshalError.NonSerializable, "Member isn't serilizable") : ((FieldInfo)objType).FieldType;
-            else
-                return ((PropertyInfo)objType).PropertyType;
-        }
-
-        /// <summary>
-        /// Gets a string which includes the name of the field/property
-        /// and returns the field/property itself
-        /// </summary>
-        /// <param name="obj">Class of the field</param>
-        /// <param name="dataInfo">The list of strings</param>
-        /// <returns>Field inside the obj type</returns>
-        private static FieldInfo GetField(object obj, ref byte[] dataInfo, ref int location)
-        {
-            location += startClass.Length;
-            string fieldName = GetSection(ref dataInfo, equals, ref location);
-            Type objType = obj.GetType();
-            return GetFieldInfosIncludingBaseClasses(objType, fieldName);
-            //methods are also members
-            //getMember returns array since one method could have multiple signatures
-            //in our case we don't care since we look for a field/property which can only have one signature
-        }
-
-        public static FieldInfo GetFieldInfosIncludingBaseClasses(Type type, string name)
-        {
-            // If this class doesn't have a base, don't waste any time
-            if (type.BaseType == typeof(object))
-                return GetField(type, name);
-            else
-            {   // Otherwise, collect all types up to the furthest base class
-                var currentType = type;
-                FieldInfo field = null;
-                while (field == null && currentType != typeof(object))
-                {
-                    field = GetField(currentType, name);
-                    currentType = currentType.BaseType;
-                }
-                return field;
-            }
-        }
-
-        //Get fields and backingFields
-        public static FieldInfo GetField(Type type, string name) =>
-            type.GetField(name, bindingFlags) ?? type.GetField($"<{name}>k__BackingField", bindingFlags);
-
-        /// <summary>
-        /// This method will get the dataInfo and rescue the required section
-        /// from the beginning of the dataInfo string until it encounters the given operation
-        /// </summary>
-        /// <param name="dataInfo">The operation</param>
-        /// <param name="syntax">Object graph</param>
-        /// <returns>The required section</returns>
-        private static Bytes GetSection(ref byte[] dataInfo, byte[] syntax, ref int location)
-        {
-            int size;
-            for (size = 0; !CheckHitOperator(dataInfo, syntax, location); size++, location++) ;
-
-            byte[] section = new byte[size];
-            Buffer.BlockCopy(dataInfo, location - size, section, 0, size);
-            location += syntax.Length;
-
-            return section;
-        }
-
-
-        /// <summary>
-        /// Gets the data of the serialized object
-        /// and returns it's name and type
-        /// </summary>
-        /// <param name="dataInfo">Object data</param>
-        /// <returns>Name and type of the serialized object</returns>
-        private static KeyValuePair<string, Type> GetSerialiedName(ref byte[] dataInfo, ref int location)
-        {
-            location += startClass.Length;
-            string objName = GetSection(ref dataInfo, typeEntry, ref location);
-            string objType = GetSection(ref dataInfo, equals, ref location);
-            return new KeyValuePair<string, Type>(objName, Type.GetType(objType));
-            //methods are also members
-            //getMember returns array since one method could have multiple signatures
-            //in our case we don't care since we look for a field/property which can only have one signature
-        }
-
-        /// <summary>
-        /// Checks if the next part of the data in the string is an operator (operator can be more than one letter)
-        /// </summary>
-        /// <param name="data"></param>
-        /// <param name="strOperator"></param>
-        /// <returns></returns>
-        private static bool CheckHitOperator(byte[] data, byte[] byteOperator,int location)
+        
+        public static object Construct(byte[] objData, IList<TgenConverter> converters)
         {
             try
             {
-                for (int i = 0; i < byteOperator.Length; i++)
-                    if (data[location + i] != byteOperator[i])
-                        return false;
-                return true;
+                var constructor = new ConstructionGraph(0, objData);
+                Type typeOfObj = constructor.GraphType(converters);
+
+                if (!typeOfObj.IsSerializable) //PROTECTION
+                    throw new MarshalException(MarshalError.NonSerializable, $"{typeOfObj} isn't a serializable type");
+
+                object result = constructor.Start(typeOfObj);
+                //object result = Construction(typeOfObj, ref objData, ref startingPoint); //starting point
+                return result;
             }
-            catch (StackOverflowException)
+            catch (SerializationException)
+            { throw; }
+            catch (Exception e)
+            { throw new MarshalException(e); }
+        }
+
+        private struct ConstructionGraph
+        {
+            int MaxSize { get; set; }
+            int _location;
+            int Location
             {
-                throw new MarshalException(MarshalError.SyntaxError);
+                get => _location;
+                set 
+                {
+                    _location = value; //Add check if hit max value
+                    if (Location > MaxSize)
+                        throw new MarshalException(MarshalError.TooLarge, $"Tried to reach location {Location}");
+                }
+
+            }
+            byte[] Graph { get; set; }
+            public ConstructionGraph(int location, byte[] graph, int maxSize = int.MaxValue)
+            {
+                MaxSize = maxSize;
+                _location = location;
+                Graph = graph;
+            }
+            public Type GraphType()
+            {
+                string strType = GetSection(equals).ToString();
+                return Type.GetType(strType, true);
+            }
+            //TODO
+            public Type GraphType(IList<TgenConverter> converters)
+            {
+                Bytes section = GetSection(equals);
+                if (section.Length == sizeof(uint)) //Must be an id
+                {
+                    uint id = section.Get<uint>();
+                    Type t = converters?.FirstOrDefault(conv => conv.Id == id)?.Type;
+                    if (t != null) //Had id
+                        return t;
+                }
+
+                string strType = section.ToString();
+                return Type.GetType(strType, true);
+            }
+            public object Start(Type objType)
+            {
+                return Construct(objType);
+            }
+
+            private object Construct(Type objType)
+            {
+                if (objType.IsPrimitive) //Primitive values
+                    return GetValue(objType);
+
+                if (objType == typeof(string))
+                    return GetString();
+
+                if (typeof(ISerializable).IsAssignableFrom(objType))
+                    return GetSerializable(objType);
+
+                if (typeof(IList).IsAssignableFrom(objType)) //arrays/ILists
+                {
+                    if (objType.IsArray)
+                        return ArrConstruction(objType);
+                    return ListConstruction(objType);
+                }
+
+                object instance = FormatterServices.GetUninitializedObject(objType);
+                while (CheckHitOperator(startClass, Location))
+                {
+                    Location += startClass.Length;
+                    FieldInfo fieldInfo = GetField(instance); //detect the field inside obj
+
+                    //if the field isn't primitive, make a new instance of it
+                    //NOTE: strings must be initialized
+                    Type typeOfInstance = GetMemberType(fieldInfo);
+
+                    if (fieldInfo.IsNotSerialized)
+                        continue;
+
+                    if (!typeOfInstance.IsSerializable) //PROTECTION
+                        throw new MarshalException(MarshalError.NonSerializable, $"{typeOfInstance} isn't a serializable type");
+
+                    var obj = Construct(typeOfInstance);
+                    fieldInfo.SetValue(instance, obj); //Will always be a field, at some cases a backingField
+                    Location += endClass.Length;
+                }
+                return instance;
+            }
+
+            private object GetValue(Type objType)
+            {
+                //Only applied on primitive types
+                int size = Marshal.SizeOf(objType);
+                object value = Bytes.ByteToPrimitive(objType, Graph, Location);
+                Location += size;
+                return value;
+            }
+
+            private ISerializable GetSerializable(Type type)
+            {
+                int length = Bytes.B2P<int>(Graph, Location);
+                Location += sizeof(int);
+
+                if (!CheckHitOperator(endClass, Location + length))
+                    throw new SerializationException($"size for ISerializeable ({type}) is mismatched");
+
+                int startIndex = Location;
+                Location += length; //Append location before allocation, it might be too big
+
+                byte[] seriData = new byte[length];
+                Buffer.BlockCopy(Graph, startIndex, seriData, 0, length);
+
+                ISerializable obj = (ISerializable)Activator.CreateInstance(type);
+                obj.Deserialize((Bytes)seriData);
+                return obj;
+            }
+
+            private string GetString()
+            {
+                int length = Bytes.B2P<int>(Graph, Location);
+                Location += sizeof(int);
+
+                if (!CheckHitOperator(endClass, Location + length))
+                    throw new SerializationException("size for string is mismatched");
+
+                int startIndex = Location;
+                Location += length; //Append location before allocation, it might be too big
+
+                byte[] strData = new byte[length];
+                Buffer.BlockCopy(Graph, startIndex, strData, 0, length);
+                return Bytes.BytesToStr(strData);
+            }
+
+            private object ArrConstruction(Type objType) //Type is an array
+            {
+                Type elementType = objType.GetElementType();
+                int length = Bytes.B2P<int>(Graph, Location);
+                Location += sizeof(int);
+                Location += startEnum.Length;
+
+                if (elementType.IsPrimitive) //Primitive array constructions
+                {
+                    if (!CheckHitOperator(endEnum, Location + length))
+                        throw new SerializationException("size for array is mismatched");
+
+                    int startIndex = Location;
+                    Location += length; //Append location before allocation, it might be too big
+
+                    Array primArr = Array.CreateInstance(elementType, length / Marshal.SizeOf(elementType));
+                    Buffer.BlockCopy(Graph, startIndex, primArr, 0, length);
+
+                    Location += endEnum.Length;
+                    return primArr;
+                }
+
+                //Managed array types constructions
+                var instance = Array.CreateInstance(elementType, length);
+                for (int i = 0; i < length; i++)
+                {
+                    object item = Construct(elementType);
+                    instance.SetValue(item, i);
+                    Location += endClass.Length;
+                }
+                Location += endEnum.Length;
+                return instance;
+            }
+
+            private object ListConstruction(Type objType)
+            {
+                IList instance = (IList)Activator.CreateInstance(objType);
+                Type typeOfInstance = objType.GetGenericArguments()[0];
+                Location += startEnum.Length;
+                while (!CheckHitOperator(endEnum, Location))
+                {
+                    object item = Construct(typeOfInstance);
+                    instance.Add(item);
+                    Location += endClass.Length;
+                }
+                Location += endEnum.Length;
+                return instance;
+            }
+
+            /// <summary>
+            /// checks if the given MemberInfo is a field or a property
+            /// (MemberInfo can only be a field, property and a method by COM)
+            /// since a serilizer doesn't check for methods, we only check if the MemberInfo is a field or a property
+            /// </summary>
+            /// <param name="objType"></param>
+            /// <returns></returns>
+            private static Type GetMemberType(MemberInfo objType)
+            {
+                if (objType is FieldInfo)
+                    return ((FieldInfo)objType).IsNotSerialized ? throw new MarshalException(MarshalError.NonSerializable, "Member isn't serilizable") : ((FieldInfo)objType).FieldType;
+                else
+                    return ((PropertyInfo)objType).PropertyType;
+            }
+
+            /// <summary>
+            /// Gets a string which includes the name of the field/property
+            /// and returns the field/property itself
+            /// </summary>
+            /// <param name="obj">Class of the field</param>
+            /// <param name="dataInfo">The list of strings</param>
+            /// <returns>Field inside the obj type</returns>
+            private FieldInfo GetField(object obj)
+            {
+                string fieldName = GetSection(equals).ToString();
+                Type objType = obj.GetType();
+                return GetFieldInfosIncludingBaseClasses(objType, fieldName);
+                //methods are also members
+                //getMember returns array since one method could have multiple signatures
+                //in our case we don't care since we look for a field/property which can only have one signature
+            }
+
+            public static FieldInfo GetFieldInfosIncludingBaseClasses(Type type, string name)
+            {
+                // If this class doesn't have a base, don't waste any time
+                if (type.BaseType == typeof(object))
+                    return GetField(type, name);
+                else
+                {   // Otherwise, collect all types up to the furthest base class
+                    var currentType = type;
+                    FieldInfo field = null;
+                    while (field == null && currentType != typeof(object))
+                    {
+                        field = GetField(currentType, name);
+                        currentType = currentType.BaseType;
+                    }
+                    return field;
+                }
+            }
+
+            //Get fields and backingFields
+            public static FieldInfo GetField(Type type, string name) =>
+                type.GetField(name, bindingFlags) ?? type.GetField($"<{name}>k__BackingField", bindingFlags);
+
+            /// <summary>
+            /// This method will get the dataInfo and rescue the required section
+            /// from the beginning of the dataInfo string until it encounters the given operation
+            /// </summary>
+            /// <param name="dataInfo">The operation</param>
+            /// <param name="syntax">Object graph</param>
+            /// <returns>The required section</returns>
+            private Bytes GetSection(byte[] syntax)
+            {
+                int size;
+                for (size = 0; !CheckHitOperator(syntax, Location); size++, Location++) ;
+
+                byte[] section = new byte[size];
+                Buffer.BlockCopy(Graph, Location - size, section, 0, size);
+                Location += syntax.Length;
+
+                return section;
+            }
+
+            /// <summary>
+            /// Checks if the next part of the data in the string is an operator (operator can be more than one letter)
+            /// </summary>
+            /// <param name="data"></param>
+            /// <param name="strOperator"></param>
+            /// <returns></returns>
+            private bool CheckHitOperator(byte[] byteOperator, int location)
+            {
+                try
+                {
+                    for (int i = 0; i < byteOperator.Length; i++)
+                        if (Graph[location + i] != byteOperator[i])
+                            return false;
+                    return true;
+                }
+                catch (SystemException ex) when (ex is IndexOutOfRangeException ||
+                                                 ex is StackOverflowException)
+                {
+                    throw new MarshalException(MarshalError.SyntaxError, "Operator failiure", ex);
+                }
             }
         }
     }

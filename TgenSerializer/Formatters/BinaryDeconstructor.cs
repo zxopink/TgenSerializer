@@ -1,15 +1,17 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.Serialization;
 using System.Text;
+using TgenSerializer.Utils;
 
 namespace TgenSerializer
 {
-    public class BinaryDeconstructor
+    internal class BinaryDeconstructor
     {
         //These fields are shared both by the constructor and constructor
         //NOTE: BetweenEnum and EndClass must have the same lenght since the serlizer treats them as the end of a class
@@ -23,13 +25,10 @@ namespace TgenSerializer
         private static Bytes serializerEntry = BinaryGlobalOperations.serializerEntry; //start of serializer object
         private static Bytes serializerExit = BinaryGlobalOperations.serializerExit; //end of serializer object
         private static Bytes typeEntry = BinaryGlobalOperations.typeEntry; //divides the name and type of an object]
-        [Obsolete]
         private static Bytes nullObj = BinaryGlobalOperations.nullObj; //sign for a nullObj (deprecated)
 
         private const BindingFlags bindingFlags = GlobalOperations.bindingFlags; //specifies to get both public and non public fields and properties
         #endregion
-
-        private static Bytes StrToByte(string str) => Encoding.ASCII.GetBytes(str);
 
         #region PrimitiveToByte
         /// <summary>
@@ -84,159 +83,206 @@ namespace TgenSerializer
         }
         #endregion
 
-        public static byte[] Deconstruct(object obj)
+        public static byte[] Deconstruct(object obj, IList<TgenConverter> converters)
         {
-            byte[] result = (startClass + obj.GetType().AssemblyQualifiedName + equals + Deconstruction(obj) + endClass);
-            //Console.WriteLine("Binary Formatter Decompression: " + result.Length);
-            return result;
-            //must delcare the type at first so the constructor later on knows with what type it deals
-            //the properties and fields can be aligned later on by using the first type, like a puzzle
-            //the name of the object doesn't matter (therefore doesn't need to be saved) as well since the it will be changed anyways
-        }
-
-        private static Bytes Deconstruction(object obj)
-        {
-            if (obj == null)
-                return nullObj;
-
-            Type type = obj.GetType();
-
-            if (type.IsPrimitive || obj is string)
-                return Bytes.PrimitiveToByte(obj);
-
-            if (obj is ISerializable)
+            try
             {
-                var writer = new DataWriter();
-                ((ISerializable)obj).Serialize(writer);
-                return writer.data;
-            }
+                Type objType = obj.GetType();
+                uint? id = converters?.FirstOrDefault(conv => conv.Type == objType)?.Id;
 
-            if (!type.IsSerializable) //PROTECTION
-                return new byte[0]; //don't touch the field, CONSIDER: throwing an error
-
-            if (obj is IList) //string is also an enum but will never reach here thanks to the primitive check
-            {
-                return ListObjDeconstructor((IList)obj);
-            }
-
-            var fields = GetFieldInfosIncludingBaseClasses(type, bindingFlags);//type.GetFields(bindingFlags);
-            Bytes objGraph = new Bytes();
-            #region SpecialCases
-            /*Special cases so far:
-             * 1. Object is null (Done)
-             * 2. Object points to itself in an infnite loop (Done)
-             * 3. backingField (Done)
-             * 4. Object is an enum/list/array (Done)
-            */
-            #endregion
-            foreach (var field in fields)
-            {
-                //the field is a field class, the fieldValue is the value of this field (the actual object)
-                //for examle field is "int num = 5" and the field value is the 5
-                if (field.IsNotSerialized)
-                    continue; //Don't touch the object, was meant to not be serialized
-
-                object fieldValue = field.GetValue(obj);
-
-                if (fieldValue == null) //No sending nulls
-                    continue; //Null object, ignore. spares the text in the writing
-
-                if (fieldValue == obj)
-                    throw new StackOverflowException("An object points to itself"); //Will cause an infinite loop, so just throw it
-
-                //BACKING FIELDS ARE IGNORED BECAUSE THE PROPERTIES LINE SAVES THEM INSTEAD
-                //one of the few compiler generated attributes is backing fields
-                //backing field is a proprty with a get and set only, which has a hidden field behind it
-                //instead we save this field in the properties
-                if (Attribute.GetCustomAttribute(field, typeof(CompilerGeneratedAttribute)) == null) //this line checks for backing field
-                    objGraph.Append(startClass + field.Name + equals + Deconstruction(fieldValue) + endClass);
+                BytesBuilder builder = new BytesBuilder();
+                if (id.HasValue)
+                    builder.Append(id.Value);
                 else
-                    objGraph.Append(startClass + GetNameOfBackingField(field.Name) + equals + Deconstruction(fieldValue) + endClass);
+                    builder.Append(objType.AssemblyQualifiedName);
+                builder.Append(equals);
+
+                var destructor = new DeconstructionGraph(builder);
+                destructor.Start(obj);
+
+                builder.Append(endClass);
+                return builder.ToBytes();
             }
-            return objGraph;
+            catch (SerializationException)
+            { throw; }
+            catch (Exception e)
+            { throw new MarshalException(e); }
         }
 
-        //TODO:
-        //If B inherits from A and they both have a private field with the same name
-        //The serializer might screw up during construction, make them different by calling them B.x and A.x
-        //Or 1.x and 2.x based on the hierarchy level
-        public static FieldInfo[] GetFieldInfosIncludingBaseClasses(Type type, BindingFlags bindingFlags)
+        private struct DeconstructionGraph
         {
-            FieldInfo[] fieldInfos = type.GetFields(bindingFlags);
-
-            // If this class doesn't have a base, don't waste any time
-            if (type.BaseType == typeof(object))
+            private BytesBuilder Graph { get; set; }
+            public DeconstructionGraph(BytesBuilder builder)
             {
-                return fieldInfos;
+                Graph = builder;
             }
-            else
-            {   // Otherwise, collect all types up to the furthest base class
-                var currentType = type;
-                var fieldComparer = new FieldInfoComparer();
-                var fieldInfoList = new HashSet<FieldInfo>(fieldInfos, fieldComparer);
-                while (currentType != typeof(object))
+            public byte[] Start(object obj)
+            {
+                Destruct(obj);
+                return Graph.ToBytes();
+            }
+            private void Destruct(object obj)
+            {
+                Type type = obj.GetType();
+
+                if (obj == null)
                 {
-                    fieldInfos = currentType.GetFields(bindingFlags);
-                    fieldInfoList.UnionWith(fieldInfos);
-                    currentType = currentType.BaseType;
+                    Graph.Append(nullObj);
+                    return;
                 }
-                return fieldInfoList.ToArray();
-            }
-        }
-        private class FieldInfoComparer : IEqualityComparer<FieldInfo>
-        {
-            public bool Equals(FieldInfo x, FieldInfo y)
-            {
-                return x.DeclaringType == y.DeclaringType && x.Name == y.Name;
-            }
 
-            public int GetHashCode(FieldInfo obj)
-            {
-                return obj.Name.GetHashCode() ^ obj.DeclaringType.GetHashCode();
-            }
-        }
-
-        private static Bytes GetNameOfBackingField(string backingField)
-        {
-            //backing field follows by the pattern: "<'name'>k__BackingField"
-            //cut the field's '<' at the start (NOT AN ENUM!)
-            //cut the '>k__BackingField' at the end
-
-            //Get the name's length
-            int count = backingField.IndexOf('>') - 1; //Minus the '<'
-            return backingField.Substring(1, count);
-        }
-
-        private static Bytes ListObjDeconstructor(IList list)
-        {
-            Bytes objGraph = new Bytes(); //TODO: ADD A WAY TO COUNT MEMEBERS AND AVOID NULL sends
-            //THIS IS A BIG NONO (spent too much on to find these issue)
-            //IF ANOTHER UNSOLVALBE ISSUE RAISES LISTS ARE YOUR FIRST WARNING
-            if (list.GetType().IsArray)
-            {
-                //if (list is List<byte>)
-                //    return ((List<byte>)list).ToArray();
-                objGraph.Append(list.Count.ToString());
-                if (list is byte[])
+                else if (type.IsPrimitive)
                 {
-                    objGraph.Append(startEnum);
-                    objGraph.Append((byte[])list);
-                    objGraph.Append(endEnum);
-                    return objGraph;
+                    Graph.Append(Bytes.PrimitiveToByte(obj));
+                    return;
                 }
-            }
-            objGraph.Append(startEnum);
-            foreach (var member in list)
-            {
-                if (member == null) //Don't add to the list,
+
+                else if (obj is string str)
                 {
-                    //objGraph.Append(nullObj + betweenEnum); //No sending nulls
-                    continue;
+                    Graph.Append(str.Length, Bytes.StrToBytes(str));
+                    return;
                 }
-                objGraph.Append(Deconstruction(member) + endClass); //between Enum is like endclass
+
+                else if (obj is ISerializable serializableObj)
+                {
+                    Bytes data = serializableObj.Serialize();
+                    int size = data.Length;
+                    Graph.Append(size);
+                    Graph.Append(data);
+                    return;
+                }
+
+                else if (!type.IsSerializable) //PROTECTION
+                {
+                    throw new SerializationException($"{type} is missing a {nameof(SerializableAttribute)}");
+                }
+
+                else if (obj is IList list) //Breaks down ILists with optimization for primitive arrays
+                {
+                    ListObjDeconstructor(list);
+                    return;
+                }
+
+                FieldInfo[] fields = GetFieldsIncludingBaseClasses(type, bindingFlags);//type.GetFields(bindingFlags);
+                foreach (FieldInfo field in fields)
+                {
+                    if (field.IsNotSerialized)
+                        continue; //Don't touch the object, was meant to not be serialized
+
+                    object fieldValue = field.GetValue(obj);
+
+                    if (fieldValue == null) //No sending nulls
+                        continue; //Null object, ignore. spares the text in the writing
+
+                    if (fieldValue == obj)
+                        throw new StackOverflowException("An object points to itself"); //Will cause an infinite loop, so just throw it
+
+                    //BACKING FIELDS ARE IGNORED BECAUSE THE PROPERTIES LINE SAVES THEM INSTEAD
+                    //one of the few compiler generated attributes is backing fields
+                    //backing field is a proprty with a get and set only, which has a hidden field behind it
+                    //instead we save this field in the properties
+                    if (Attribute.GetCustomAttribute(field, typeof(CompilerGeneratedAttribute)) == null) //this line checks for backing field
+                    {
+                        Graph.Append(startClass, field.Name, equals);
+                        Destruct(fieldValue);
+                        Graph.Append(endClass);
+                    }
+                    else
+                    {
+                        Graph.Append(startClass, GetNameOfBackingField(field.Name), equals);
+                        Destruct(fieldValue);
+                        Graph.Append(endClass);
+                    }
+                }
             }
-            objGraph.Append(endEnum);
-            return objGraph;
+
+            //TODO:
+            //If B inherits from A and they both have a private field with the same name
+            //The serializer might screw up during construction, make them different by calling them B.x and A.x
+            //Or 1.x and 2.x based on the hierarchy level
+            public static FieldInfo[] GetFieldsIncludingBaseClasses(Type type, BindingFlags bindingFlags)
+            {
+                FieldInfo[] fieldInfos = type.GetFields(bindingFlags);
+
+                // If this class doesn't have a base, don't waste any time
+                if (type.BaseType == typeof(object))
+                {
+                    return fieldInfos;
+                }
+                else
+                {   // Otherwise, collect all types up to the furthest base class
+                    var currentType = type;
+                    var fieldComparer = new FieldInfoComparer();
+                    var fieldInfoList = new HashSet<FieldInfo>(fieldInfos, fieldComparer);
+                    while (currentType != typeof(object))
+                    {
+                        fieldInfos = currentType.GetFields(bindingFlags);
+                        fieldInfoList.UnionWith(fieldInfos);
+                        currentType = currentType.BaseType;
+                    }
+                    return fieldInfoList.ToArray();
+                }
+            }
+            private class FieldInfoComparer : IEqualityComparer<FieldInfo>
+            {
+                public bool Equals(FieldInfo x, FieldInfo y)
+                {
+                    return x.DeclaringType == y.DeclaringType && x.Name == y.Name;
+                }
+
+                public int GetHashCode(FieldInfo obj)
+                {
+                    return obj.Name.GetHashCode() ^ obj.DeclaringType.GetHashCode();
+                }
+            }
+
+            private static Bytes GetNameOfBackingField(string backingField)
+            {
+                //backing field follows by the pattern: "<'name'>k__BackingField"
+                //cut the field's '<' at the start (NOT AN ENUM!)
+                //cut the '>k__BackingField' at the end
+
+                //Get the name's length
+                int count = backingField.IndexOf('>') - 1; //Minus the '<'
+                return backingField.Substring(1, count);
+            }
+
+            private void ListObjDeconstructor(IList list)
+            {
+                Type type = list.GetType();
+                if (type.IsArray && type.GetElementType().IsPrimitive)
+                {
+                    Array primArray = (Array)list;
+                    int len = Buffer.ByteLength(primArray);
+
+                    byte[] data;
+                    if (list is byte[] byteArr)
+                        data = byteArr;
+                    else
+                    {
+                        data = new byte[len];
+                        Buffer.BlockCopy(primArray, 0, data, 0, len);
+                    }
+                    Graph.Append(len);
+                    Graph.Append(startEnum);
+                    Graph.Append(data);
+                    Graph.Append(endEnum);
+                    return;
+                }
+
+                if(type.IsArray)
+                    Graph.Append(list.Count);
+
+                Graph.Append(startEnum);
+                foreach (var member in list)
+                {
+                    if (member == null) continue;
+                    Destruct(member);
+                    Graph.Append(endClass); //between Enum is like endclass
+                }
+                Graph.Append(endEnum);
+                return;
+            }
         }
     }
 }

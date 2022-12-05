@@ -23,12 +23,12 @@ namespace TgenSerializer
 
         public void AddInfo(object obj)
         {
-            data += obj;
+            data += (Bytes)obj;
         }
 
         public T GetT<T>()
         {
-            return Bytes.ByteToPrimitive<T>(objInfo, index);
+            return (T)Bytes.ByteToPrimitive(typeof(T), objInfo, index);
         }
     }
 }

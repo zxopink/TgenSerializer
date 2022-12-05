@@ -44,7 +44,7 @@ namespace TgenSerializer
         #endregion
     }
 
-    public static class JsonGlobalOperations
+    internal static class JsonGlobalOperations
     {
         //These fields are shared both by the Constructor and Deconstructor
         #region Global Fields
@@ -64,23 +64,22 @@ namespace TgenSerializer
         #endregion
     }
 
-    public static class BinaryGlobalOperations
+    internal static class BinaryGlobalOperations
     {
         //These fields are shared both by the Constructor and Deconstructor
         //NOTE: BetweenEnum and EndClass must have the same lenght since the serlizer treats them as the end of a class
         #region Global Binary Fields
-        public static byte[] startClass = Encoding.UTF8.GetBytes("[[[");
-        public static byte[] equals = Encoding.UTF8.GetBytes("===");
-        public static byte[] endClass = Encoding.UTF8.GetBytes("]]]");
-        public static byte[] startEnum = Encoding.UTF8.GetBytes("<<<"); //start of array (enumer is sort of a collection like array and list, I like to call it array at time)
+        public static byte[] startClass = Encoding.UTF8.GetBytes("[");
+        public static byte[] equals = Encoding.UTF8.GetBytes("==");
+        public static byte[] endClass = Encoding.UTF8.GetBytes("]");
+        public static byte[] startEnum = Encoding.UTF8.GetBytes("<"); //start of array (enumer is sort of a collection like array and list, I like to call it array at time)
         [Obsolete]
         public static byte[] betweenEnum = Encoding.UTF8.GetBytes(","); //spaces between items/members in the array (Obsolete)
-        public static byte[] endEnum = Encoding.UTF8.GetBytes(">>>"); //end of array
-        public static byte[] serializerEntry = Encoding.UTF8.GetBytes("!!!");
-        public static byte[] serializerExit = Encoding.UTF8.GetBytes("~~~");
-        public static byte[] typeEntry = Encoding.UTF8.GetBytes("///");
-        [Obsolete]
-        public static byte[] nullObj = Encoding.UTF8.GetBytes("");
+        public static byte[] endEnum = Encoding.UTF8.GetBytes(">"); //end of array
+        public static byte[] serializerEntry = Encoding.UTF8.GetBytes("!");
+        public static byte[] serializerExit = Encoding.UTF8.GetBytes("~");
+        public static byte[] typeEntry = Encoding.UTF8.GetBytes("/");
+        public static byte[] nullObj = Encoding.UTF8.GetBytes(string.Empty);
         #endregion
     }
 }

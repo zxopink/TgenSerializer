@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
@@ -14,10 +14,17 @@
     <NeutralLanguage>en</NeutralLanguage>
     <Description>A Formatter to Serializer and Deserialize runtime object into Bytes/Text/Json types.
 Also provides a handy util Bytes class</Description>
-    <Version>0.6.1</Version>
+    <Version>0.7.0</Version>
+
+    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
+    <!--Custom constant, responsible for unsafe methods-->
+    <DefineConstants Condition="'$(AllowUnsafeBlocks)' == 'true'">AllowUnsafe</DefineConstants>
+
+    <!--Custom variable, responsible for String and JSON serialization-->
+    <AllowTextFormats>false</AllowTextFormats>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <CheckForOverflowUnderflow>False</CheckForOverflowUnderflow>
   </PropertyGroup>
 
@@ -25,6 +32,18 @@ Also provides a handy util Bytes class</Description>
     <CheckForOverflowUnderflow>False</CheckForOverflowUnderflow>
   </PropertyGroup>
 
+  <ItemGroup Condition="$(AllowTextFormats) == false">
+    <Compile Remove="Formatters\JsonConstructor.cs" />
+    <Compile Remove="Formatters\JsonDeconstructor.cs" />
+    <Compile Remove="Formatters\StrConstructor.cs" />
+    <Compile Remove="Formatters\StrDeconstructor.cs" />
+    <Compile Remove="IJSONSerialize.cs" />
+    <Compile Remove="JsonElement.cs" />
+    <Compile Remove="Utils\DataReader.cs" />
+    <Compile Remove="Utils\DataWriter.cs" />
+    <Compile Remove="FormatInfo.cs" />
+  </ItemGroup>
+  
   <ItemGroup>
     <None Include="..\icon.png">
       <Pack>True</Pack>

@@ -1,12 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using TgenSerializer.Utils;
 
 namespace TgenSerializer
 {
     public class DataWriter
     {
-        public Bytes data { get; private set; }
+        public ByteBuilder data { get; private set; }
 
         public DataWriter(object obj) : this(obj.GetType()) {}
 
@@ -16,11 +17,11 @@ namespace TgenSerializer
         /// <param name="objType">Object's data</param>
         public DataWriter(Type objType) : this()
         {
-            data += objType.FullName;
+            data.Append(objType.FullName);
         }
         public DataWriter()
         {
-            data = new Bytes();
+            data = new ByteBuilder();
         }
 
         public void WriteBytes(Type type) { WriteBytes(type.FullName); }
@@ -42,6 +43,6 @@ namespace TgenSerializer
             data.Append(value);
         }
 
-        public byte[] GetData() => data.GetBytes();
+        public byte[] GetData() => data.ToBytes();
     }
 }

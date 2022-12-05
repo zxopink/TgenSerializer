@@ -14,6 +14,6 @@ namespace TgenSerializer
         NonSerializable,
         ///<summary>Stream data is false (Could not find next operator during construction)</summary>
         SyntaxError,
-
+        InternalError,
     }
 }
