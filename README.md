@@ -31,12 +31,12 @@ With the `Bytes` class you can use addition (`+`) to concat arrays of bytes.
 It also includes implicit cast operations to easily cast primitive objects into bytes and back.  
 Example:
 ```cs
-    Bytes hello = "Hello ";
-    byte[] world = (Bytes)"world";
-    byte[] helloWorld = hello + world;
+Bytes hello = "Hello ";
+byte[] world = (Bytes)"world";
+byte[] helloWorld = hello + world;
 
-    Bytes result = helloWorld;
-    Console.WriteLine(result.ToString()); //'Hello world' casted back to string
+Bytes result = helloWorld;
+Console.WriteLine(result.ToString()); //'Hello world' casted back to string
 ```
 
 ## BytesBuilder
