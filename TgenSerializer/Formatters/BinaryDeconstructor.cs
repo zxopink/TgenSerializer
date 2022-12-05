@@ -90,7 +90,7 @@ namespace TgenSerializer
                 Type objType = obj.GetType();
                 uint? id = converters?.FirstOrDefault(conv => conv.Type == objType)?.Id;
 
-                ByteBuilder builder = new ByteBuilder();
+                BytesBuilder builder = new BytesBuilder();
                 if (id.HasValue)
                     builder.Append(id.Value);
                 else
@@ -111,8 +111,8 @@ namespace TgenSerializer
 
         private struct DeconstructionGraph
         {
-            private ByteBuilder Graph { get; set; }
-            public DeconstructionGraph(ByteBuilder builder)
+            private BytesBuilder Graph { get; set; }
+            public DeconstructionGraph(BytesBuilder builder)
             {
                 Graph = builder;
             }

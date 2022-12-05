@@ -4,7 +4,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 
-namespace TgenSerializer
+namespace TgenSerializer.Utils
 {
     /// <summary>
     /// Converts type to number and back

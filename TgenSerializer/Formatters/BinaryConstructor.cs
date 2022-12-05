@@ -6,6 +6,7 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Runtime.Serialization;
+using TgenSerializer.Utils;
 
 namespace TgenSerializer
 {

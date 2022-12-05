@@ -12,19 +12,19 @@ namespace TgenSerializer.Utils
     /// So the program can append many byte arrays in a significant speed and while maintaining high preformance.
     /// Note: extreme use of this class should require basic understanding of memory management in object oriented languages.
     /// </summary>
-    public class ByteBuilder
+    public class BytesBuilder
     {
         List<byte[]> BytesList { get; set; }
         public int Length { get; private set; }
-        public ByteBuilder()
+        public BytesBuilder()
         {
             BytesList = new List<byte[]>();
             Length = 0;
         }
 
-        public ByteBuilder(byte[] value) : this() =>
+        public BytesBuilder(byte[] value) : this() =>
             Append(value);
-        public ByteBuilder(byte[][] value) : this() =>
+        public BytesBuilder(byte[][] value) : this() =>
             Append(value);
 
         public void Append(byte[] bytes)
