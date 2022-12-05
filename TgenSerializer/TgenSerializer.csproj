@@ -14,7 +14,7 @@
     <NeutralLanguage>en</NeutralLanguage>
     <Description>A Formatter to Serializer and Deserialize runtime object into Bytes/Text/Json types.
 Also provides a handy util Bytes class</Description>
-    <Version>0.6.1</Version>
+    <Version>0.7.0</Version>
 
     <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
     <!--Custom constant, responsible for unsafe methods-->
