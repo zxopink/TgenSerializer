@@ -39,7 +39,7 @@ Example:
     Console.WriteLine(result.ToString()); //'Hello world' casted back to string
 ```
 
-##BytesBuilder
+## BytesBuilder
 Much like StringBuilder but for bytes
 ```cs
 BytesBuilder b = new BytesBuilder();
@@ -48,7 +48,7 @@ b.Append(30);
 byte[] nums = b.ToBytes();
 ```
 
-##ValueTuples/Tuples
+## ValueTuples/Tuples
 Bytes has helper methods to easily convert into groups of primitive values and back
 ```cs
 Bytes vals = Bytes.GetBytes(10, 20, 40, 80);
