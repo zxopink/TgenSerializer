@@ -15,9 +15,10 @@ namespace TgenSerializer
         /// <summary>Converts a primitive (or string) object to an array of bytes</summary>
         //public static byte[] P2B(object obj) => PrimitiveToByte(obj);
         /// <summary>Converts a primitive (or string) object to an array of bytes</summary>
-        public static byte[] P2B<T>(T obj) where T : unmanaged => PrimitiveToByte(obj);
+        public static byte[] P2B<T>(T obj) where T : unmanaged => PrimitiveToByte<T>(obj);
         public static byte[] PrimitiveToByte(object obj)
         {
+            byte[] ret;
             if (obj is sbyte valSbyte)
             {
                 string byteString = valSbyte.ToString("X2");
@@ -29,43 +30,43 @@ namespace TgenSerializer
             }
             else if (obj is short valInt16)
             {
-                return BitConverter.GetBytes(valInt16);
+                ret = BitConverter.GetBytes(valInt16);
             }
             else if (obj is char valChar)
             {
-                return BitConverter.GetBytes(valChar);
+                ret = BitConverter.GetBytes(valChar);
             }
             else if (obj is int valInt32)
             {
-                return BitConverter.GetBytes(valInt32);
+                ret = BitConverter.GetBytes(valInt32);
             }
             else if (obj is bool valBool)
             {
-                return BitConverter.GetBytes(valBool);
+                ret = BitConverter.GetBytes(valBool);
             }
             else if (obj is long valInt64)
             {
-                return BitConverter.GetBytes(valInt64);
+                ret = BitConverter.GetBytes(valInt64);
             }
             else if (obj is float valFloat)
             {
-                return BitConverter.GetBytes(valFloat);
+                ret = BitConverter.GetBytes(valFloat);
             }
             else if (obj is double valDouble)
             {
-                return BitConverter.GetBytes(valDouble);
+                ret = BitConverter.GetBytes(valDouble);
             }
             else if (obj is ushort valUint16)
             {
-                return BitConverter.GetBytes(valUint16);
+                ret = BitConverter.GetBytes(valUint16);
             }
             else if (obj is uint valUint32)
             {
-                return BitConverter.GetBytes(valUint32);
+                ret = BitConverter.GetBytes(valUint32);
             }
             else if (obj is ulong valUint64)
             {
-                return BitConverter.GetBytes(valUint64);
+                ret = BitConverter.GetBytes(valUint64);
             }
             else if (obj is decimal deci)
             {
@@ -73,15 +74,20 @@ namespace TgenSerializer
                 int[] ints = Decimal.GetBits(deci); //Decimal is 16 bytes, 4 ints
                 byte[] buf = new byte[ints.Length * sizeof(int)];
                 System.Buffer.BlockCopy(ints, 0, buf, 0, buf.Length);
-                return buf;
+                ret = buf;
             }
             else
             {
                 throw new SerializationException("Primitive object of type " + obj.GetType() + " cannot be converted into bytes");
             }
+            if (BitConverter.IsLittleEndian)
+                Array.Reverse(ret);
+            return ret;
+
         } //Boxing (Garbage collection)
         public static byte[] PrimitiveToByte<T>(T obj) where T : unmanaged
         {
+            byte[] ret;
             if (obj is sbyte valSbyte)
             {
                 string byteString = valSbyte.ToString("X2");
@@ -93,43 +99,43 @@ namespace TgenSerializer
             }
             else if (obj is short valInt16)
             {
-                return BitConverter.GetBytes(valInt16);
+                ret = BitConverter.GetBytes(valInt16);
             }
             else if (obj is char valChar)
             {
-                return BitConverter.GetBytes(valChar);
+                ret = BitConverter.GetBytes(valChar);
             }
             else if (obj is int valInt32)
             {
-                return BitConverter.GetBytes(valInt32);
+                ret = BitConverter.GetBytes(valInt32);
             }
             else if (obj is bool valBool)
             {
-                return BitConverter.GetBytes(valBool);
+                ret = BitConverter.GetBytes(valBool);
             }
             else if (obj is long valInt64)
             {
-                return BitConverter.GetBytes(valInt64);
+                ret = BitConverter.GetBytes(valInt64);
             }
             else if (obj is float valFloat)
             {
-                return BitConverter.GetBytes(valFloat);
+                ret = BitConverter.GetBytes(valFloat);
             }
             else if (obj is double valDouble)
             {
-                return BitConverter.GetBytes(valDouble);
+                ret = BitConverter.GetBytes(valDouble);
             }
             else if (obj is ushort valUint16)
             {
-                return BitConverter.GetBytes(valUint16);
+                ret = BitConverter.GetBytes(valUint16);
             }
             else if (obj is uint valUint32)
             {
-                return BitConverter.GetBytes(valUint32);
+                ret = BitConverter.GetBytes(valUint32);
             }
             else if (obj is ulong valUint64)
             {
-                return BitConverter.GetBytes(valUint64);
+                ret = BitConverter.GetBytes(valUint64);
             }
             else if (obj is decimal deci)
             {
@@ -137,12 +143,15 @@ namespace TgenSerializer
                 int[] ints = Decimal.GetBits(deci); //Decimal is 16 bytes, 4 ints
                 byte[] buf = new byte[ints.Length * sizeof(int)];
                 System.Buffer.BlockCopy(ints, 0, buf, 0, buf.Length);
-                return buf;
+                ret = buf;
             }
             else
             {
                 throw new SerializationException("Primitive object of type " + obj.GetType() + " cannot be converted into bytes");
             }
+            if (BitConverter.IsLittleEndian)
+                Array.Reverse(ret);
+            return ret;
         } //No boxing
 
         /// <summary>Converts an array of bytes to a specified primitive (or string) object</summary>
@@ -153,49 +162,52 @@ namespace TgenSerializer
 
         public static object ByteToPrimitive(Type objType, byte[] objData, int startIndex = 0)
         {
+            if (BitConverter.IsLittleEndian)
+                Array.Reverse(objData);
+            object val;
             if (objType.Equals(typeof(sbyte)))
             {
-                return BitConverter.ToChar(objData, startIndex);
+                val = BitConverter.ToChar(objData, startIndex);
             }
             else if (objType.Equals(typeof(byte)))
             {
-                return objData[startIndex];
+                val = objData[startIndex];
             }
             else if (objType.Equals(typeof(short)))
             {
-                return BitConverter.ToInt16(objData, startIndex);
+                val = BitConverter.ToInt16(objData, startIndex);
             }
             else if (objType.Equals(typeof(int)))
             {
-                return BitConverter.ToInt32(objData, startIndex);
+                val = BitConverter.ToInt32(objData, startIndex);
             }
             else if (objType.Equals(typeof(bool)))
             {
-                return BitConverter.ToBoolean(objData, startIndex);
+                val = BitConverter.ToBoolean(objData, startIndex);
             }
             else if (objType.Equals(typeof(long)))
             {
-                return BitConverter.ToInt64(objData, startIndex);
+                val = BitConverter.ToInt64(objData, startIndex);
             }
             else if (objType.Equals(typeof(float)))
             {
-                return BitConverter.ToSingle(objData, startIndex);
+                val = BitConverter.ToSingle(objData, startIndex);
             }
             else if (objType.Equals(typeof(double)))
             {
-                return BitConverter.ToDouble(objData, startIndex);
+                val = BitConverter.ToDouble(objData, startIndex);
             }
             else if (objType.Equals(typeof(ushort)))
             {
-                return BitConverter.ToUInt16(objData, startIndex);
+                val = BitConverter.ToUInt16(objData, startIndex);
             }
             else if (objType.Equals(typeof(uint)))
             {
-                return BitConverter.ToUInt32(objData, startIndex);
+                val = BitConverter.ToUInt32(objData, startIndex);
             }
             else if (objType.Equals(typeof(ulong)))
             {
-                return BitConverter.ToUInt64(objData, startIndex);
+                val = BitConverter.ToUInt64(objData, startIndex);
             }
             else if (objType.Equals(typeof(decimal)))
             {
@@ -206,6 +218,9 @@ namespace TgenSerializer
             {
                 throw new SerializationException("Type " + objType + " cannot be converted into bytes");
             }
+            if (BitConverter.IsLittleEndian)
+                Array.Reverse(objData);
+            return val;
         } //Boxing (Garbage collection)
         /// <summary>
         /// Turns a byte[] into a primitive object
@@ -216,60 +231,63 @@ namespace TgenSerializer
         /// <returns>A primitive object</returns>
         public static T ByteToPrimitive<T>(byte[] objData, int startIndex = 0) where T : unmanaged
         {
+            if (BitConverter.IsLittleEndian)
+                Array.Reverse(objData);
+            T val;
             if (typeof(T).Equals(typeof(sbyte)))
             {
-                var val = BitConverter.ToChar(objData, startIndex);
-                return val is T ret ? ret : default;
+                var obj = BitConverter.ToChar(objData, startIndex);
+                val = obj is T ret ? ret : default;
             }
             else if (typeof(T).Equals(typeof(byte)))
             {
-                var val = objData[startIndex];
-                return val is T ret ? ret : default;
+                var obj = objData[startIndex];
+                val = obj is T ret ? ret : default;
             }
             else if (typeof(T).Equals(typeof(short)))
             {
-                var val = BitConverter.ToInt16(objData, startIndex);
-                return val is T ret ? ret : default;
+                var obj = BitConverter.ToInt16(objData, startIndex);
+                val = obj is T ret ? ret : default;
             }
             else if (typeof(T).Equals(typeof(int)))
             {
-                var val = BitConverter.ToInt32(objData, startIndex);
-                return val is T ret ? ret : default;
+                var obj = BitConverter.ToInt32(objData, startIndex);
+                val = obj is T ret ? ret : default;
             }
             else if (typeof(T).Equals(typeof(bool)))
             {
-                var val = BitConverter.ToBoolean(objData, startIndex);
-                return val is T ret ? ret : default;
+                var obj = BitConverter.ToBoolean(objData, startIndex);
+                val = obj is T ret ? ret : default;
             }
             else if (typeof(T).Equals(typeof(long)))
             {
-                var val = BitConverter.ToInt64(objData, startIndex);
-                return val is T ret ? ret : default;
+                var obj = BitConverter.ToInt64(objData, startIndex);
+                val = obj is T ret ? ret : default;
             }
             else if (typeof(T).Equals(typeof(float)))
             {
-                var val = BitConverter.ToSingle(objData, startIndex);
-                return val is T ret ? ret : default;
+                var obj = BitConverter.ToSingle(objData, startIndex);
+                val = obj is T ret ? ret : default;
             }
             else if (typeof(T).Equals(typeof(double)))
             {
-                var val = BitConverter.ToDouble(objData, startIndex);
-                return val is T ret ? ret : default;
+                var obj = BitConverter.ToDouble(objData, startIndex);
+                val = obj is T ret ? ret : default;
             }
             else if (typeof(T).Equals(typeof(ushort)))
             {
-                var val = BitConverter.ToUInt16(objData, startIndex);
-                return val is T ret ? ret : default;
+                var obj = BitConverter.ToUInt16(objData, startIndex);
+                val = obj is T ret ? ret : default;
             }
             else if (typeof(T).Equals(typeof(uint)))
             {
-                var val = BitConverter.ToUInt32(objData, startIndex);
-                return val is T ret ? ret : default;
+                var obj = BitConverter.ToUInt32(objData, startIndex);
+                val = obj is T ret ? ret : default;
             }
             else if (typeof(T).Equals(typeof(ulong)))
             {
-                var val = BitConverter.ToUInt64(objData, startIndex);
-                return val is T ret ? ret : default;
+                var obj = BitConverter.ToUInt64(objData, startIndex);
+                val = obj is T ret ? ret : default;
             }
             else if (typeof(T).Equals(typeof(decimal)))
             {
@@ -280,6 +298,9 @@ namespace TgenSerializer
             {
                 throw new SerializationException("Type " + typeof(T) + " cannot be converted into bytes");
             }
+            if (BitConverter.IsLittleEndian)
+                Array.Reverse(objData);
+            return val;
         } //No boxing
 
         public static Bytes GetBytes(bool value) => (Bytes)BitConverter.GetBytes(value);
