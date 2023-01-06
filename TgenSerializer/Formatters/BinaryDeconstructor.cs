@@ -139,7 +139,8 @@ namespace TgenSerializer
 
                 else if (obj is string str)
                 {
-                    Graph.Append(str.Length, Bytes.StrToBytes(str));
+                    Bytes data = Bytes.StrToBytes(str);
+                    Graph.Append(data.Length, data);
                     return;
                 }
 
