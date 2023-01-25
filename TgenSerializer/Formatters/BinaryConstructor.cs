@@ -141,7 +141,12 @@ namespace TgenSerializer
             private object GetValue(Type objType)
             {
                 //Only applied on primitive types
-                int size = Marshal.SizeOf(objType);
+                int size;
+                if (objType == typeof(Boolean))
+                    size = 1;
+                else
+                    size = Marshal.SizeOf(objType);
+                
                 object value = Bytes.ByteToPrimitive(objType, Graph, Location);
                 Location += size;
                 return value;
