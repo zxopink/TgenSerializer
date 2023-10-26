@@ -44,5 +44,8 @@ namespace TgenSerializer
         /// <summary>Converts the bytes to a UTF8 string</summary>
         public override string ToString() => 
             BytesToStr(this);
+
+        public string ToString(Encoding encoding) =>
+            BytesToStr(this, encoding);
     }
 }

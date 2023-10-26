@@ -30,10 +30,11 @@ namespace TgenSerializer
         /// <summary>Converts the bytes to T</summary>
         /// <param name="returnType">must be a primitive</param>
         public object Get(Type returnType) => ByteToPrimitive(returnType, this); //Implicit use of the function GetBytes()
+        public object Get(Type returnType, int offset) => ByteToPrimitive(returnType, this, startIndex: offset); //Implicit use of the function GetBytes()
         /// <summary>Converts the bytes to T</summary>
         /// <typeparam name="T">must be a primitive or string type</typeparam>
         public T Get<T>() where T : unmanaged => ByteToPrimitive<T>(this); //Implicit use of the function GetBytes()
-
+        public T Get<T>(int offset) where T : unmanaged => ByteToPrimitive<T>(this, startIndex: offset); //Implicit use of the function GetBytes()
         /// <summary>
         /// Gets a <c>ValueTuple</c> type with primitive item types and converts the Bytes to the given type.
         /// 

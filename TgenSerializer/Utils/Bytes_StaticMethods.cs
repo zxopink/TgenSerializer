@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Drawing;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Runtime.Serialization;
 using System.Text;
@@ -12,6 +13,10 @@ namespace TgenSerializer
     public partial struct Bytes
     {
         public static Bytes Empty => Array.Empty<byte>();
+        
+        /// <summary>Creates a new buffer with the specified size</summary>
+        public static Bytes OfSize(int size) => new byte[size];
+        
         /// <summary>Converts a primitive (or string) object to an array of bytes</summary>
         //public static byte[] P2B(object obj) => PrimitiveToByte(obj);
         /// <summary>Converts a primitive (or string) object to an array of bytes</summary>
@@ -309,6 +314,16 @@ namespace TgenSerializer
             return (Bytes)Concat(list);
         }
 
+        public static Bytes Concat(params Bytes[] bytes)
+        {
+            int size = bytes.Sum(arr => arr.Length);
+            byte[] ret = new byte[size];
+            int index = 0;
+            for (int i = 0; i < bytes.Length; index += bytes[i].Length, i++)
+                System.Buffer.BlockCopy(bytes[i], 0, ret, index, bytes[i].Length);
+
+            return (Bytes)ret;
+        }
         public static byte[] Concat(params byte[][] bytes)
         {
             int size = bytes.Sum(arr => arr.Length);
@@ -345,7 +360,7 @@ namespace TgenSerializer
         public static uint ToUInt32(byte[] value, int startIndex) => BitConverter.ToUInt32(value, startIndex);
         public static ulong ToUInt64(byte[] value, int startIndex) => BitConverter.ToUInt64(value, startIndex);
 
-        /// <summary>A UTF8 encryption</summary>
+        /// <summary>A UTF8 decryption</summary>
         public static byte[] StrToBytes(string str) => Encoding.UTF8.GetBytes(str);
         public static byte[] StrToBytes(string str, Encoding encoder) => encoder.GetBytes(str);
 
